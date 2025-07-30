@@ -44,19 +44,19 @@ export default function SettingsScreen({ navigation }) {
       }
     },
     pro: {
-      name: '🧠 Pro Mode',
-      description: 'Realistic pre-snap reads only',
-      explanation: 'Coming soon...',
-      settings: {
-        formation_name: true,
-        personnel: true,
-        coverage_name: false,
-        coverage_type: false,
-        blitz_name: false,
-        rushers: false,
-        coverage_adjustment: false,
-        field_visual: true
-      }
+        name: '🧠 Pro Mode',
+        description: 'Realistic pre-snap reads only',
+        explanation: 'This is how real QBs see the defense before the snap! You can identify the formation and count personnel (which is visible on the field), but coverage schemes and blitz packages are much harder to determine. This creates a realistic challenge where you must make decisions based on limited information.',
+        settings: {
+            formation_name: true,
+            personnel: true,
+            coverage_name: false,
+            coverage_type: false,
+            blitz_name: false,
+            rushers: false,
+            coverage_adjustment: false,
+            field_visual: true
+        }
     },
     elite: {
       name: '🔥 Elite Mode', 
@@ -90,14 +90,19 @@ export default function SettingsScreen({ navigation }) {
     }
   };
 
-  const handleSaveSettings = () => {
-    // For now, just show what would be saved
-    const currentSettings = difficultyModes[selectedDifficulty];
-    console.log('Saving settings:', currentSettings);
-    
-    // TODO: Save to AsyncStorage and pass to GameScreen
-    navigation.goBack();
+  const handleSaveSettings = async () => {
+    try {
+        const currentSettings = difficultyModes[selectedDifficulty];
+        await AsyncStorage.setItem('visibilitySettings', JSON.stringify(currentSettings.settings));
+        console.log('Settings saved:', currentSettings.settings);
+        Alert.alert('Settings Saved', `${currentSettings.name} difficulty has been applied!`);
+        navigation.goBack();
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        Alert.alert('Error', 'Could not save settings');
+    }
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
