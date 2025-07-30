@@ -19,12 +19,37 @@ function useOrientation() {
   return orientation;
 }
 
+// Checkbox component for custom settings
+const CustomCheckbox = ({ label, value, onToggle, helpText }) => (
+  <TouchableOpacity style={styles.checkboxRow} onPress={onToggle}>
+    <View style={styles.checkboxContainer}>
+      <View style={[styles.checkbox, value && styles.checkboxChecked]}>
+        {value && <Text style={styles.checkboxCheck}>✓</Text>}
+      </View>
+      <Text style={styles.checkboxLabel}>{label}</Text>
+    </View>
+    {helpText && <Text style={styles.checkboxHelp}>{helpText}</Text>}
+  </TouchableOpacity>
+);
+
 export default function SettingsScreen({ navigation }) {
   const orientation = useOrientation();
   const isLandscape = orientation === 'landscape';
   
   // State for selected difficulty mode
   const [selectedDifficulty, setSelectedDifficulty] = useState('rookie');
+
+    // State for custom settings (add this)
+    const [customSettings, setCustomSettings] = useState({
+        formation_name: true,
+        personnel: true,
+        coverage_name: false,
+        coverage_type: false,
+        blitz_name: false,
+        rushers: false,
+        coverage_adjustment: false,
+        field_visual: true
+    });
 
   // Difficulty mode configurations (from your Streamlit app)
   const difficultyModes = {
@@ -74,28 +99,26 @@ export default function SettingsScreen({ navigation }) {
         }
     },
     custom: {
-      name: '🎮 Custom Mode',
-      description: 'Choose exactly what you can see',
-      explanation: 'Coming soon...',
-      settings: {
-        formation_name: true,
-        personnel: true,
-        coverage_name: false,
-        coverage_type: false,
-        blitz_name: false,
-        rushers: false,
-        coverage_adjustment: false,
-        field_visual: true
-      }
+        name: '🎮 Custom Mode',
+        description: 'Choose exactly what you can see',
+        explanation: 'Configure your own difficulty! Choose exactly which pieces of information you want to see about the defense. This lets you create your own challenge level - show everything like Rookie mode, or hide specific information to test your reads.',
+        settings: customSettings // Use the dynamic state instead of static settings
     }
   };
 
   const handleSaveSettings = async () => {
     try {
-        const currentSettings = difficultyModes[selectedDifficulty];
-        await AsyncStorage.setItem('visibilitySettings', JSON.stringify(currentSettings.settings));
-        console.log('Settings saved:', currentSettings.settings);
-        Alert.alert('Settings Saved', `${currentSettings.name} difficulty has been applied!`);
+        let settingsToSave;
+    
+        if (selectedDifficulty === 'custom') {
+            settingsToSave = customSettings;
+        } else {
+            settingsToSave = difficultyModes[selectedDifficulty].settings;
+        }
+    
+        await AsyncStorage.setItem('visibilitySettings', JSON.stringify(settingsToSave));
+        console.log('Settings saved:', settingsToSave);
+        Alert.alert('Settings Saved', `${difficultyModes[selectedDifficulty].name} difficulty has been applied!`);
         navigation.goBack();
     } catch (error) {
         console.error('Error saving settings:', error);
@@ -158,45 +181,108 @@ export default function SettingsScreen({ navigation }) {
           </View>
 
           {/* Right Panel - Selected Mode Details */}
-          <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
-            <Text style={styles.sectionTitleLarge}>
-              {difficultyModes[selectedDifficulty].name} Details
-            </Text>
-            
-            <View style={styles.explanationBox}>
-              <Text style={styles.explanationTitle}>What You'll See:</Text>
-              <Text style={styles.explanationText}>
-                {difficultyModes[selectedDifficulty].explanation}
-              </Text>
-            </View>
+<View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
+  <Text style={styles.sectionTitleLarge}>
+    {difficultyModes[selectedDifficulty].name} Details
+  </Text>
+  
+  <View style={styles.explanationBox}>
+    <Text style={styles.explanationTitle}>What You'll See:</Text>
+    <Text style={styles.explanationText}>
+      {difficultyModes[selectedDifficulty].explanation}
+    </Text>
+  </View>
 
-            {/* Show what information will be visible */}
-            <View style={styles.visibilityPreview}>
-              <Text style={styles.visibilityTitle}>📋 Information Visibility:</Text>
-              
-              {Object.entries(difficultyModes[selectedDifficulty].settings).map(([setting, visible]) => (
-                <View key={setting} style={styles.visibilityRow}>
-                  <Text style={styles.visibilityLabel}>
-                    {getSettingLabel(setting)}
-                  </Text>
-                  <Text style={[
-                    styles.visibilityStatus,
-                    visible ? styles.visibilityVisible : styles.visibilityHidden
-                  ]}>
-                    {visible ? '✓ Visible' : '✗ Hidden'}
-                  </Text>
-                </View>
-              ))}
-            </View>
+  {/* ADD THIS CONDITIONAL RENDERING */}
+  {selectedDifficulty === 'custom' ? (
+    <ScrollView style={styles.customSettingsContainer}>
+      <Text style={styles.sectionSubtitle}>🏈 Visible Information:</Text>
+      
+      {/* Field Visual - Always first */}
+      <CustomCheckbox
+        label="🏈 Field Visual"
+        value={customSettings.field_visual}
+        onToggle={() => setCustomSettings(prev => ({...prev, field_visual: !prev.field_visual}))}
+        helpText="Show the X's and O's field representation"
+      />
 
-            {/* Real QB Information */}
-            <View style={styles.realQBBox}>
-              <Text style={styles.realQBTitle}>💡 Real QB Info:</Text>
-              <Text style={styles.realQBText}>
-                Real quarterbacks can usually identify the formation and count personnel, but coverage schemes and blitz packages are much harder to determine before the snap!
-              </Text>
-            </View>
-          </View>
+      <Text style={styles.categoryHeader}>Formation Info:</Text>
+      <CustomCheckbox
+        label="📋 Formation Name"
+        value={customSettings.formation_name}
+        onToggle={() => setCustomSettings(prev => ({...prev, formation_name: !prev.formation_name}))}
+        helpText="Defense formation (4-3, Nickel, etc.) - usually obvious"
+      />
+      <CustomCheckbox
+        label="👥 Personnel Package"
+        value={customSettings.personnel}
+        onToggle={() => setCustomSettings(prev => ({...prev, personnel: !prev.personnel}))}
+        helpText="Number of DBs, LBs, etc. - can count players"
+      />
+
+      <Text style={styles.categoryHeader}>Coverage Info:</Text>
+      <CustomCheckbox
+        label="🎯 Coverage Name"
+        value={customSettings.coverage_name}
+        onToggle={() => setCustomSettings(prev => ({...prev, coverage_name: !prev.coverage_name}))}
+        helpText="Specific coverage (Cover 2, Cover 3, etc.)"
+      />
+      <CustomCheckbox
+        label="🔍 Coverage Type"
+        value={customSettings.coverage_type}
+        onToggle={() => setCustomSettings(prev => ({...prev, coverage_type: !prev.coverage_type}))}
+        helpText="Zone vs Man coverage type"
+      />
+
+      <Text style={styles.categoryHeader}>Pressure Info:</Text>
+      <CustomCheckbox
+        label="🔥 Blitz Package"
+        value={customSettings.blitz_name}
+        onToggle={() => setCustomSettings(prev => ({...prev, blitz_name: !prev.blitz_name}))}
+        helpText="Specific blitz scheme name"
+      />
+      <CustomCheckbox
+        label="⚡ Number of Rushers"
+        value={customSettings.rushers}
+        onToggle={() => setCustomSettings(prev => ({...prev, rushers: !prev.rushers}))}
+        helpText="How many players are rushing"
+      />
+      <CustomCheckbox
+        label="🔄 Coverage Adjustment"
+        value={customSettings.coverage_adjustment}
+        onToggle={() => setCustomSettings(prev => ({...prev, coverage_adjustment: !prev.coverage_adjustment}))}
+        helpText="Post-snap coverage changes"
+      />
+    </ScrollView>
+  ) : (
+    /* KEEP EXISTING CODE FOR NON-CUSTOM MODES */
+    <View style={styles.visibilityPreview}>
+      <Text style={styles.visibilityTitle}>📋 Information Visibility:</Text>
+      
+      {Object.entries(difficultyModes[selectedDifficulty].settings).map(([setting, visible]) => (
+        <View key={setting} style={styles.visibilityRow}>
+          <Text style={styles.visibilityLabel}>
+            {getSettingLabel(setting)}
+          </Text>
+          <Text style={[
+            styles.visibilityStatus,
+            visible ? styles.visibilityVisible : styles.visibilityHidden
+          ]}>
+            {visible ? '✓ Visible' : '✗ Hidden'}
+          </Text>
+        </View>
+      ))}
+    </View>
+  )}
+
+  {/* Real QB Information - keep existing */}
+  <View style={styles.realQBBox}>
+    <Text style={styles.realQBTitle}>💡 Real QB Info:</Text>
+    <Text style={styles.realQBText}>
+      Real quarterbacks can usually identify the formation and count personnel, but coverage schemes and blitz packages are much harder to determine before the snap!
+    </Text>
+  </View>
+</View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -435,5 +521,62 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#78350f',
     lineHeight: 20,
+  },
+  customSettingsContainer: {
+    maxHeight: 400,
+    marginTop: 16,
+  },
+  categoryHeader: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f4e79',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  checkboxRow: {
+    marginBottom: 12,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    borderRadius: 4,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+  },
+  checkboxChecked: {
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
+  },
+  checkboxCheck: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: '#374151',
+    fontWeight: '600',
+    flex: 1,
+  },
+  checkboxHelp: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginLeft: 36,
+    fontStyle: 'italic',
+  },
+  sectionSubtitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f4e79',
+    marginBottom: 16,
   },
 });
