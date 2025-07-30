@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Alert, Dimensions } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../ApiService';
 
 // Hook to track orientation changes
@@ -56,12 +57,45 @@ export default function GameScreen({ navigation }) {
   const [selectedFormation, setSelectedFormation] = useState(null);
   const [formationPlays, setFormationPlays] = useState([]);
   const [playResult, setPlayResult] = useState(null);
+  const [visibilitySettings, setVisibilitySettings] = useState({
+    formation_name: true,
+    personnel: true,
+    coverage_name: true,
+    coverage_type: true,
+    blitz_name: false,
+    rushers: true,
+    coverage_adjustment: false,
+    field_visual: true
+  });
 
   // Load data when screen loads
   useEffect(() => {
     loadDefensiveScenario();
     loadOffensiveFormations();
+    loadVisibilitySettings();
   }, []);
+
+  // Load visibility settings when screen gains focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadVisibilitySettings();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  const loadVisibilitySettings = async () => {
+  try {
+    const savedSettings = await AsyncStorage.getItem('visibilitySettings');
+    console.log('Loaded settings from storage:', savedSettings); // Add this line
+    if (savedSettings) {
+      const parsedSettings = JSON.parse(savedSettings);
+      console.log('Parsed settings:', parsedSettings); // Add this line
+      setVisibilitySettings(parsedSettings);
+    }
+  } catch (error) {
+    console.error('Error loading visibility settings:', error);
+  }
+};
 
   const loadDefensiveScenario = async () => {
     try {
@@ -228,7 +262,7 @@ export default function GameScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerBar}>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonHeader}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonHeader}>
           <Text style={styles.backButtonHeaderText}>← Home</Text>
         </TouchableOpacity>
         <Text style={styles.titleLarge}>🛡️ Read the Defense</Text>
@@ -258,25 +292,54 @@ export default function GameScreen({ navigation }) {
               <View style={styles.defenseInfoBox}>
                 <Text style={styles.sectionTitle}>🛡️ Defensive Setup</Text>
                 
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Formation:</Text>
-                  <Text style={styles.infoValue}>{defensiveScenario.formation_data.formation_name}</Text>
-                </View>
+                {visibilitySettings.formation_name && (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Formation:</Text>
+                    <Text style={styles.infoValue}>{defensiveScenario.formation_data.formation_name}</Text>
+                  </View>
+                )}
                 
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Personnel:</Text>
-                  <Text style={styles.infoValue}>{defensiveScenario.formation_data.personnel}</Text>
-                </View>
+                {visibilitySettings.personnel && (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Personnel:</Text>
+                    <Text style={styles.infoValue}>{defensiveScenario.formation_data.personnel}</Text>
+                  </View>
+                )}
                 
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Coverage:</Text>
-                  <Text style={styles.infoValue}>{defensiveScenario.coverage_data.name}</Text>
-                </View>
+                {visibilitySettings.coverage_name && (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Coverage:</Text>
+                    <Text style={styles.infoValue}>{defensiveScenario.coverage_data.name}</Text>
+                  </View>
+                )}
                 
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Blitz Package:</Text>
-                  <Text style={styles.infoValue}>{defensiveScenario.blitz_data.name}</Text>
-                </View>
+                {visibilitySettings.coverage_type && (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Type:</Text>
+                    <Text style={styles.infoValue}>{defensiveScenario.coverage_data.coverage_type}</Text>
+                  </View>
+                )}
+                
+                {visibilitySettings.blitz_name && (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Blitz Package:</Text>
+                    <Text style={styles.infoValue}>{defensiveScenario.blitz_data.name}</Text>
+                  </View>
+                )}
+                
+                {visibilitySettings.rushers && (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Rushers:</Text>
+                    <Text style={styles.infoValue}>{defensiveScenario.blitz_data.rushers}</Text>
+                  </View>
+                )}
+                
+                {visibilitySettings.coverage_adjustment && (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Coverage Adjustment:</Text>
+                    <Text style={styles.infoValue}>{defensiveScenario.blitz_data.coverage_adjustment}</Text>
+                  </View>
+                )}
               </View>
             )}
 

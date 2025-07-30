@@ -6,6 +6,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 // Import screens
 import HomeScreen from './screens/HomeScreen';
 import GameScreen from './screens/GameScreen';
+import SettingsScreen from './screens/SettingsScreen';
 
 const Stack = createStackNavigator();
 
@@ -53,47 +54,6 @@ function LibraryScreen({ navigation }) {
           <Text style={styles.sectionTitleLarge}>🛡️ Defensive Formations</Text>
           <Text style={styles.placeholderText}>
             Defensive formation library will show coverage packages, blitz schemes, and how to attack each defensive look.
-          </Text>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-// Placeholder Settings Screen - will be created next
-function SettingsScreen({ navigation }) {
-  const orientation = useOrientation();
-  const isLandscape = orientation === 'landscape';
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headerBar}>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonHeader}>
-          <Text style={styles.backButtonHeaderText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.titleLarge}>⚙️ Difficulty Settings</Text>
-        <View style={styles.placeholder} />
-      </View>
-      
-      <View style={isLandscape ? styles.horizontalContent : styles.verticalContent}>
-        <View style={isLandscape ? styles.leftPanel : styles.fullPanel}>
-          <Text style={styles.sectionTitleLarge}>🎮 Difficulty Presets</Text>
-          <Text style={styles.placeholderText}>
-            • 👶 Rookie Mode - See most defensive information{'\n'}
-            • 🧠 Pro Mode - Realistic pre-snap reads only{'\n'}
-            • 🔥 Elite Mode - Visual only, minimal information{'\n'}
-            • 🎮 Custom Mode - Choose exactly what you can see
-          </Text>
-        </View>
-        
-        <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
-          <Text style={styles.sectionTitleLarge}>👁️ Visibility Controls</Text>
-          <Text style={styles.placeholderText}>
-            Settings screen coming next! This will include:{'\n'}
-            • Formation visibility controls{'\n'}
-            • Coverage information settings{'\n'}
-            • Blitz package visibility{'\n'}
-            • Game mode selection (Learner vs Pro)
           </Text>
         </View>
       </View>
