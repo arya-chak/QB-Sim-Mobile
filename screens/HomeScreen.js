@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Alert, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView, Dimensions } from 'react-native';
 import ApiService from '../ApiService';
 
 // Hook to track orientation changes
@@ -19,388 +19,107 @@ function useOrientation() {
   return orientation;
 }
 
-// Helper functions
-const getFormationEmoji = (formationName) => {
-  const emojiMap = {
-    'i-form': '🏃',
-    'singleback': '⚔️',
-    'shotgun': '⚡',
-    'trips': '📐',
-    'bunch': '🎯',
-    'empty': '🌊',
-    'goal line': '💪'
-  };
-  return emojiMap[formationName] || '🏈';
-};
-
-const getAppropriatenessStyle = (category) => {
-  const styleMap = {
-    'Perfect': { color: '#10b981', fontWeight: 'bold' },
-    'Good': { color: '#059669', fontWeight: '600' },
-    'Average': { color: '#f59e0b', fontWeight: '600' },
-    'Poor': { color: '#dc2626', fontWeight: '600' },
-    'Terrible': { color: '#991b1b', fontWeight: 'bold' },
-    'Overkill': { color: '#3b82f6', fontWeight: '600' }
-  };
-  return styleMap[category] || { color: '#6b7280' };
-};
-
-export default function GameScreen({ navigation }) {
+export default function HomeScreen({ navigation }) {
   const orientation = useOrientation();
   const isLandscape = orientation === 'landscape';
-  
-  const [defensiveScenario, setDefensiveScenario] = useState(null);
-  const [offensiveFormations, setOffensiveFormations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [minimumYards, setMinimumYards] = useState(0);
-  const [selectedFormation, setSelectedFormation] = useState(null);
-  const [formationPlays, setFormationPlays] = useState([]);
-  const [playResult, setPlayResult] = useState(null);
+  const [stats, setStats] = useState(null);
 
-  // Load data when screen loads
   useEffect(() => {
-    loadDefensiveScenario();
-    loadOffensiveFormations();
+    loadStats();
   }, []);
 
-  const loadDefensiveScenario = async () => {
+  const loadStats = async () => {
     try {
-      setLoading(true);
-      const scenarioData = await ApiService.getDefensiveScenario();
-      setDefensiveScenario(scenarioData.scenario);
-      setMinimumYards(scenarioData.minimum_yards);
+      const apiStats = await ApiService.getStats();
+      setStats(apiStats);
     } catch (error) {
-      Alert.alert('Error', 'Could not load defensive scenario. Make sure your API server is running.');
-      console.error('Error loading defensive scenario:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error loading stats:', error);
     }
   };
 
-  const loadOffensiveFormations = async () => {
-    try {
-      const formations = await ApiService.getOffensiveFormations();
-      setOffensiveFormations(formations);
-    } catch (error) {
-      Alert.alert('Error', 'Could not load offensive formations.');
-      console.error('Error loading formations:', error);
-    }
-  };
-
-  const selectFormation = async (formation) => {
-    try {
-      setSelectedFormation(formation);
-      const plays = await ApiService.getFormationPlays(formation.name);
-      setFormationPlays(plays);
-    } catch (error) {
-      Alert.alert('Error', 'Could not load plays for this formation.');
-      console.error('Error loading plays:', error);
-    }
-  };
-
-  const executePlay = async (play) => {
-    try {
-      setLoading(true);
-      const result = await ApiService.simulatePlay(play, defensiveScenario, minimumYards);
-      setPlayResult(result);
-    } catch (error) {
-      Alert.alert('Error', 'Could not simulate play.');
-      console.error('Error simulating play:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetScenario = () => {
-    setSelectedFormation(null);
-    setFormationPlays([]);
-    setPlayResult(null);
-    loadDefensiveScenario();
-  };
-
-  const retryScenario = () => {
-    setSelectedFormation(null);
-    setFormationPlays([]);
-    setPlayResult(null);
-    // Keep the same scenario, don't reload
-  };
-
-  if (loading && !defensiveScenario) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1f4e79" />
-          <Text style={styles.loadingText}>Loading defensive scenario...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Show play result screen - horizontal layout
-  if (playResult) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonHeader}>
-            <Text style={styles.backButtonHeaderText}>← Home</Text>
-          </TouchableOpacity>
-          <Text style={styles.titleLarge}>📊 Play Result</Text>
-          <View style={styles.headerButtons}>
-            <TouchableOpacity onPress={retryScenario} style={styles.headerActionButton}>
-              <Text style={styles.headerActionButtonText}>🔄 Retry</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={resetScenario} style={styles.headerActionButton}>
-              <Text style={styles.headerActionButtonText}>🎲 New</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.scrollContentContainer}>
-          <View style={isLandscape ? styles.horizontalContent : styles.verticalContent}>
-            {/* Left Panel - Result Details */}
-            <View style={isLandscape ? styles.leftPanel : styles.fullPanel}>
-              <View style={[styles.resultBox, playResult.success ? styles.successBox : styles.failureBox]}>
-                <Text style={styles.resultTitle}>
-                  {playResult.success ? '✅ SUCCESS!' : '❌ FAILURE!'}
-                </Text>
-                <Text style={styles.resultYards}>
-                  {playResult.yards_gained} yards gained (needed {playResult.yards_needed})
-                </Text>
-              </View>
-
-              <View style={styles.resultDetailsBox}>
-                <Text style={styles.sectionTitle}>📋 Play Analysis</Text>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Appropriateness:</Text>
-                  <Text style={[styles.infoValue, getAppropriatenessStyle(playResult.appropriateness_category)]}>
-                    {playResult.appropriateness_category}
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Outcome:</Text>
-                  <Text style={styles.infoValue}>{playResult.outcome_type.replace('_', ' ')}</Text>
-                </View>
-                <Text style={styles.description}>{playResult.description}</Text>
-                
-                {/* Learning Analysis - Similar to Streamlit version */}
-                <View style={styles.learningBox}>
-                  <Text style={styles.learningTitle}>🧑‍🏫 Learning Analysis</Text>
-                  {renderLearningAnalysis(playResult.appropriateness_category)}
-                </View>
-              </View>
-            </View>
-
-            {/* Right Panel - Action Buttons */}
-            <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
-              <Text style={styles.sectionTitleLarge}>What's Next?</Text>
-              
-              <TouchableOpacity 
-                style={styles.primaryButtonLarge}
-                onPress={retryScenario}
-              >
-                <Text style={styles.primaryButtonTextLarge}>🔄 Try Same Scenario</Text>
-                <Text style={styles.buttonSubtext}>Keep practicing this defense</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.secondaryButtonLarge}
-                onPress={resetScenario}
-              >
-                <Text style={styles.secondaryButtonTextLarge}>🎲 New Scenario</Text>
-                <Text style={styles.buttonSubtext}>Get a different defensive look</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.tertiaryButtonLarge}
-                onPress={() => navigation.navigate('Home')}
-              >
-                <Text style={styles.tertiaryButtonTextLarge}>🏠 Back to Home</Text>
-                <Text style={styles.buttonSubtext}>Main menu</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  // Main game screen - horizontal layout
   return (
     <SafeAreaView style={styles.container}>
+      {/* Compact Header Bar */}
       <View style={styles.headerBar}>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonHeader}>
-          <Text style={styles.backButtonHeaderText}>← Home</Text>
-        </TouchableOpacity>
-        <Text style={styles.titleLarge}>🛡️ Read the Defense</Text>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.headerActionButton}>
-            <Text style={styles.headerActionButtonText}>⚙️ Settings</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={resetScenario} style={styles.headerActionButton}>
-            <Text style={styles.headerActionButtonText}>🎲 New</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.titleLarge}>🏈 QB Pre-Snap Simulator</Text>
+        <Text style={styles.subtitleLarge}>
+          {isLandscape ? 'Landscape Mode' : 'Portrait Mode'}
+        </Text>
       </View>
 
+      {/* Responsive Content Layout with ScrollView */}
       <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.scrollContentContainer}>
         <View style={isLandscape ? styles.horizontalContent : styles.verticalContent}>
-          {/* Left Panel - Defensive Information */}
+          
+          {/* Left Panel - Quote & Description */}
           <View style={isLandscape ? styles.leftPanel : styles.fullPanel}>
-            {/* Yards Needed */}
-            <View style={styles.yardsNeededBox}>
-              <Text style={styles.yardsNeededText}>
-                🎯 YOU NEED {minimumYards} YARDS
+            <Text style={styles.quoteTextLarge}>
+              "I didn't snap the ball unless I knew what they were doing..."
+            </Text>
+            <Text style={styles.quoteAuthor}>— Tom Brady</Text>
+            
+            <View style={styles.descriptionBox}>
+              <Text style={styles.descriptionTitle}>🎯 How to Play:</Text>
+              <Text style={styles.descriptionText}>
+                • Read the defensive formation{'\n'}
+                • Identify coverage and personnel{'\n'}
+                • Select the right play to attack{'\n'}
+                • Learn from your decisions
               </Text>
             </View>
 
-            {/* Defensive Information */}
-            {defensiveScenario && (
-              <View style={styles.defenseInfoBox}>
-                <Text style={styles.sectionTitle}>🛡️ Defensive Setup</Text>
-                
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Formation:</Text>
-                  <Text style={styles.infoValue}>{defensiveScenario.formation_data.formation_name}</Text>
-                </View>
-                
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Personnel:</Text>
-                  <Text style={styles.infoValue}>{defensiveScenario.formation_data.personnel}</Text>
-                </View>
-                
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Coverage:</Text>
-                  <Text style={styles.infoValue}>{defensiveScenario.coverage_data.name}</Text>
-                </View>
-                
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Blitz Package:</Text>
-                  <Text style={styles.infoValue}>{defensiveScenario.blitz_data.name}</Text>
-                </View>
+            {stats && (
+              <View style={styles.statsBox}>
+                <Text style={styles.statsTitle}>📊 Available Data:</Text>
+                <Text style={styles.statsText}>
+                  • {stats.defensive_formations} Defensive Formations{'\n'}
+                  • {stats.offensive_formations} Offensive Formations{'\n'}
+                  • {stats.total_defensive_scenarios} Total Scenarios{'\n'}
+                  • {stats.total_offensive_plays} Offensive Plays
+                </Text>
               </View>
             )}
-
-            {/* Placeholder for field visual */}
-            <View style={styles.fieldVisualBox}>
-              <Text style={styles.fieldVisualTitle}>🏈 Field Visual</Text>
-              <View style={styles.fieldPlaceholder}>
-                <Text style={styles.fieldPlaceholderText}>
-                  [X's and O's diagram]{'\n'}
-                  Coming in next update
-                </Text>
-              </View>
-            </View>
           </View>
 
-          {/* Right Panel - Offensive Selections */}
+          {/* Right Panel - Action Buttons */}
           <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
-            {!selectedFormation ? (
-              // Formation Selection
-              <>
-                <Text style={styles.sectionTitleLarge}>⚔️ Select Your Formation</Text>
-                <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
-                  {offensiveFormations.map((formation, index) => (
-                    <TouchableOpacity 
-                      key={index}
-                      style={styles.formationButtonLarge}
-                      onPress={() => selectFormation(formation)}
-                    >
-                      <Text style={styles.formationButtonTitle}>
-                        {getFormationEmoji(formation.name)} {formation.display_name}
-                      </Text>
-                      <Text style={styles.formationButtonSubtitle}>
-                        {formation.personnel} • {formation.description}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </>
-            ) : (
-              // Play Selection
-              <>
-                <View style={styles.playSelectionHeader}>
-                  <Text style={styles.sectionTitleLarge}>🏈 Select Your Play</Text>
-                  <TouchableOpacity 
-                    style={styles.changeFormationButton}
-                    onPress={() => setSelectedFormation(null)}
-                  >
-                    <Text style={styles.changeFormationButtonText}>← Change Formation</Text>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text style={styles.selectedFormationText}>
-                  Formation: {selectedFormation.display_name}
+            <TouchableOpacity 
+              style={styles.primaryButtonLarge}
+              onPress={() => navigation.navigate('Game')}
+            >
+              <Text style={styles.primaryButtonTextLarge}>🎯 Start New Scenario</Text>
+              <Text style={styles.buttonSubtext}>Test your QB decision making</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.secondaryButtonLarge}
+              onPress={() => navigation.navigate('Library')}
+            >
+              <Text style={styles.secondaryButtonTextLarge}>📚 Formation Library</Text>
+              <Text style={styles.buttonSubtext}>Study all formations and plays</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.tertiaryButtonLarge}
+              onPress={() => navigation.navigate('Settings')}
+            >
+              <Text style={styles.tertiaryButtonTextLarge}>⚙️ Difficulty Settings</Text>
+              <Text style={styles.buttonSubtext}>Customize what you can see</Text>
+            </TouchableOpacity>
+
+            {isLandscape && (
+              <View style={styles.landscapeIndicator}>
+                <Text style={styles.landscapeText}>
+                  🏈 Perfect! This landscape view is optimized for tablet use.
                 </Text>
-                
-                <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
-                  {formationPlays.map((play, index) => (
-                    <TouchableOpacity 
-                      key={index}
-                      style={styles.playButtonLarge}
-                      onPress={() => executePlay(play)}
-                    >
-                      <Text style={styles.playButtonTitle}>
-                        {play.type === 'Pass' ? '🎯' : '🏃'} {play.name}
-                      </Text>
-                      <Text style={styles.playButtonSubtitle}>
-                        {play.concept} • {play.type}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </>
+              </View>
             )}
           </View>
         </View>
       </ScrollView>
-
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#1f4e79" />
-          <Text style={styles.loadingText}>Processing...</Text>
-        </View>
-      )}
     </SafeAreaView>
   );
 }
-
-// Learning Analysis Component - matches Streamlit feedback
-const renderLearningAnalysis = (appropriateness) => {
-  const analysisMap = {
-    'Perfect': {
-      style: styles.perfectAnalysis,
-      text: "📚 EXCELLENT READ! 🎯 This was a Perfect call - you correctly identified and exploited a weakness in this defense!"
-    },
-    'Good': {
-      style: styles.goodAnalysis,
-      text: "📚 GOOD READ! ✅ This was a solid choice that worked well against this defensive setup."
-    },
-    'Average': {
-      style: styles.averageAnalysis,
-      text: "📚 DECENT READ ⚖️ This was an Average call - not bad, but there were better options available against this defense."
-    },
-    'Poor': {
-      style: styles.poorAnalysis,
-      text: "📚 LEARNING MOMENT ⚠️ This was a Poor choice - the defense had advantages. Study what they were showing!"
-    },
-    'Terrible': {
-      style: styles.terribleAnalysis,
-      text: "📚 TOUGH LESSON ❌ This was a Terrible call - this defense was set up perfectly to stop that play. Learn from this!"
-    },
-    'Overkill': {
-      style: styles.overkillAnalysis,
-      text: "📚 CREATIVE CHOICE 🚀 This was Overkill - it worked but was more complex than needed for this situation."
-    }
-  };
-
-  const analysis = analysisMap[appropriateness] || analysisMap['Average'];
-
-  return (
-    <View style={analysis.style}>
-      <Text style={styles.analysisText}>{analysis.text}</Text>
-    </View>
-  );
-};
 
 const styles = StyleSheet.create({
   container: {
@@ -423,36 +142,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
-  backButtonHeader: {
-    padding: 8,
-  },
-  backButtonHeaderText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  headerActionButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  headerActionButtonText: {
-    color: 'white',
+  subtitleLarge: {
     fontSize: 14,
-    fontWeight: '600',
+    color: '#e0e7ff',
   },
 
-  // Layout
+  // Horizontal Content Layout
   horizontalContent: {
     flexDirection: 'row',
     gap: 20,
     minHeight: '100%',
   },
+  // Vertical Content Layout
   verticalContent: {
     minHeight: '100%',
   },
@@ -485,6 +186,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  // Full panel for portrait mode
   fullPanel: {
     backgroundColor: 'white',
     borderRadius: 12,
@@ -497,94 +199,62 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  // Typography
-  sectionTitleLarge: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1f4e79',
-    marginBottom: 16,
-  },
-  sectionTitle: {
+  // Typography - Larger for tablets
+  quoteTextLarge: {
     fontSize: 18,
+    fontStyle: 'italic',
+    color: '#6b7280',
+    lineHeight: 26,
+    marginBottom: 12,
+  },
+  quoteAuthor: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1f4e79',
-    marginBottom: 12,
-  },
-
-  // Info Boxes
-  yardsNeededBox: {
-    backgroundColor: '#fff3cd',
-    padding: 20,
-    borderRadius: 10,
-    borderLeftWidth: 5,
-    borderLeftColor: '#ffc107',
-    marginBottom: 20,
-  },
-  yardsNeededText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#856404',
-    textAlign: 'center',
-  },
-  defenseInfoBox: {
-    backgroundColor: '#f0f2f6',
-    padding: 20,
-    borderRadius: 10,
-    borderLeftWidth: 5,
-    borderLeftColor: '#1f4e79',
-    marginBottom: 20,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    alignItems: 'center',
-  },
-  infoLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-    flex: 1,
-  },
-  infoValue: {
-    fontSize: 16,
-    color: '#6b7280',
-    flex: 1,
+    marginBottom: 24,
     textAlign: 'right',
   },
 
-  // Field Visual
-  fieldVisualBox: {
-    backgroundColor: '#e8f5e8',
-    borderRadius: 10,
-    borderLeftWidth: 5,
-    borderLeftColor: '#10b981',
-    padding: 20,
-  },
-  fieldVisualTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#10b981',
-    marginBottom: 12,
-  },
-  fieldPlaceholder: {
-    backgroundColor: '#f3f4f6',
+  // Description and Info Boxes
+  descriptionBox: {
+    backgroundColor: '#f0f9ff',
+    borderLeftWidth: 4,
+    borderLeftColor: '#0ea5e9',
+    padding: 16,
     borderRadius: 8,
-    padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderStyle: 'dashed',
-    borderWidth: 2,
-    borderColor: '#9ca3af',
+    marginBottom: 20,
   },
-  fieldPlaceholderText: {
+  descriptionTitle: {
     fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    fontStyle: 'italic',
+    fontWeight: 'bold',
+    color: '#0369a1',
+    marginBottom: 8,
+  },
+  descriptionText: {
+    fontSize: 15,
+    color: '#0c4a6e',
+    lineHeight: 22,
+  },
+  statsBox: {
+    backgroundColor: '#f0fdf4',
+    borderLeftWidth: 4,
+    borderLeftColor: '#10b981',
+    padding: 16,
+    borderRadius: 8,
+  },
+  statsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#047857',
+    marginBottom: 8,
+  },
+  statsText: {
+    fontSize: 15,
+    color: '#065f46',
+    lineHeight: 22,
   },
 
-  // Buttons
+  // Large Buttons for Tablets
   primaryButtonLarge: {
     backgroundColor: '#10b981',
     paddingVertical: 18,
@@ -649,191 +319,19 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  // Formation and Play Selection
-  selectionScrollView: {
-    flex: 1,
-    maxHeight: 400,
-  },
-  formationButtonLarge: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
-    borderRadius: 10,
+  // Landscape indicator
+  landscapeIndicator: {
+    backgroundColor: '#f0f9ff',
+    borderLeftWidth: 4,
+    borderLeftColor: '#0ea5e9',
     padding: 16,
-    marginBottom: 12,
-  },
-  formationButtonTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#374151',
-    marginBottom: 4,
-  },
-  formationButtonSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  playSelectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  changeFormationButton: {
-    backgroundColor: '#e5e7eb',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  changeFormationButtonText: {
-    color: '#374151',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  selectedFormationText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#10b981',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  playButtonLarge: {
-    backgroundColor: '#3b82f6',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 12,
-  },
-  playButtonTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 4,
-  },
-  playButtonSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-  },
-
-  // Results
-  resultBox: {
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  successBox: {
-    backgroundColor: '#d4edda',
-    borderLeftWidth: 5,
-    borderLeftColor: '#28a745',
-  },
-  failureBox: {
-    backgroundColor: '#f8d7da',
-    borderLeftWidth: 5,
-    borderLeftColor: '#dc3545',
-  },
-  resultTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  resultYards: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  resultDetailsBox: {
-    backgroundColor: '#f8f9fa',
-    padding: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#dee2e6',
-    marginBottom: 20,
-  },
-  description: {
-    fontSize: 16,
-    color: '#495057',
-    marginTop: 12,
-    fontStyle: 'italic',
-    lineHeight: 22,
-  },
-
-  // Learning Analysis Styles
-  learningBox: {
+    borderRadius: 8,
     marginTop: 20,
-    borderRadius: 8,
   },
-  learningTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f4e79',
-    marginBottom: 12,
-  },
-  perfectAnalysis: {
-    backgroundColor: '#d4edda',
-    borderLeftWidth: 4,
-    borderLeftColor: '#28a745',
-    padding: 16,
-    borderRadius: 8,
-  },
-  goodAnalysis: {
-    backgroundColor: '#d4edda',
-    borderLeftWidth: 4,
-    borderLeftColor: '#28a745',
-    padding: 16,
-    borderRadius: 8,
-  },
-  averageAnalysis: {
-    backgroundColor: '#d1ecf1',
-    borderLeftWidth: 4,
-    borderLeftColor: '#bee5eb',
-    padding: 16,
-    borderRadius: 8,
-  },
-  poorAnalysis: {
-    backgroundColor: '#fff3cd',
-    borderLeftWidth: 4,
-    borderLeftColor: '#ffeaa7',
-    padding: 16,
-    borderRadius: 8,
-  },
-  terribleAnalysis: {
-    backgroundColor: '#f8d7da',
-    borderLeftWidth: 4,
-    borderLeftColor: '#f5c6cb',
-    padding: 16,
-    borderRadius: 8,
-  },
-  overkillAnalysis: {
-    backgroundColor: '#d1ecf1',
-    borderLeftWidth: 4,
-    borderLeftColor: '#bee5eb',
-    padding: 16,
-    borderRadius: 8,
-  },
-  analysisText: {
-    fontSize: 16,
-    fontWeight: '600',
-    lineHeight: 22,
-  },
-
-  // Loading
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 18,
-    color: '#1f4e79',
+  landscapeText: {
+    fontSize: 14,
+    color: '#0369a1',
+    textAlign: 'center',
     fontWeight: '600',
   },
 });
