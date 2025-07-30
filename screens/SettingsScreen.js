@@ -59,19 +59,19 @@ export default function SettingsScreen({ navigation }) {
         }
     },
     elite: {
-      name: '🔥 Elite Mode', 
-      description: 'Visual only - minimal information',
-      explanation: 'Coming soon...',
-      settings: {
-        formation_name: false,
-        personnel: false,
-        coverage_name: false,
-        coverage_type: false,
-        blitz_name: false,
-        rushers: false,
-        coverage_adjustment: false,
-        field_visual: true
-      }
+        name: '🔥 Elite Mode', 
+        description: 'Visual only - minimal information',
+        explanation: 'The ultimate challenge! Only the field visual is shown - no text information about formation, personnel, coverage, or blitz packages. You must identify everything yourself by reading the X\'s and O\'s diagram just like elite quarterbacks do. This simulates real game conditions where you have to make split-second decisions based purely on visual recognition.',
+        settings: {
+            formation_name: false,
+            personnel: false,
+            coverage_name: false,
+            coverage_type: false,
+            blitz_name: false,
+            rushers: false,
+            overage_adjustment: false,
+            field_visual: true
+        }
     },
     custom: {
       name: '🎮 Custom Mode',
