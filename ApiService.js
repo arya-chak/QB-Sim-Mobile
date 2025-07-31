@@ -90,6 +90,31 @@ class ApiService {
       throw error;
     }
   }
+
+  static async getStrategicPlays(defensiveScenario, minimumYards) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/strategic-plays`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          scenario: defensiveScenario,
+          minimum_yards: minimumYards
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching strategic plays:', error);
+      throw error;
+    }
+  }
 }
 
 export default ApiService;

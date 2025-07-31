@@ -67,6 +67,9 @@ export default function GameScreen({ navigation }) {
     coverage_adjustment: false,
     field_visual: true
   });
+  const [gameMode, setGameMode] = useState('learner'); // 'learner' or 'expert'
+  const [strategicPlays, setStrategicPlays] = useState(null);
+  const [playShuffleOrder, setPlayShuffleOrder] = useState([]);
 
   // Load data when screen loads
   useEffect(() => {
@@ -121,21 +124,77 @@ export default function GameScreen({ navigation }) {
     }
   };
 
+  const loadStrategicPlays = async () => {
+    try {
+      if (!defensiveScenario) return;
+    
+      const strategicData = await ApiService.getStrategicPlays(defensiveScenario, minimumYards);
+      setStrategicPlays(strategicData);
+    
+      // Create shuffled order for the 5 plays
+      const playList = [];
+      Object.values(strategicData.strategic_plays).forEach(play => {
+        if (play) playList.push(play);
+      });
+    
+      // Shuffle the plays so appropriateness isn't obvious
+      const shuffled = [...playList].sort(() => Math.random() - 0.5);
+      setPlayShuffleOrder(shuffled);
+    } catch (error) {
+      console.error('Error loading strategic plays:', error);
+    }
+  };
+
+  // Load strategic plays when game mode changes to learner
+  useEffect(() => {
+    if (gameMode === 'learner' && defensiveScenario) {
+      loadStrategicPlays();
+    }
+  }, [gameMode, defensiveScenario]);
+
   const selectFormation = async (formation) => {
     try {
       setSelectedFormation(formation);
-      const plays = await ApiService.getFormationPlays(formation.name);
-      setFormationPlays(plays);
+    
+      if (gameMode === 'learner') {
+        // Learner mode: Load strategic plays instead of all formation plays
+        await loadStrategicPlays();
+      } else {
+        // Expert mode: Load all plays for this formation
+        const plays = await ApiService.getFormationPlays(formation.name);
+        setFormationPlays(plays);
+      }
     } catch (error) {
       Alert.alert('Error', 'Could not load plays for this formation.');
-      console.error('Error loading plays:', error);
+      console.error('Error selecting formation:', error);
     }
   };
 
   const executePlay = async (play) => {
     try {
       setLoading(true);
-      const result = await ApiService.simulatePlay(play, defensiveScenario, minimumYards);
+    
+      // For strategic plays, we need to use the comprehensive_data or play_data
+      let playToExecute;
+    
+      if (gameMode === 'learner' && play.play_data) {
+        // This is a strategic play from learner mode
+        playToExecute = play.comprehensive_data || play.play_data;
+      
+        // Add the pre-determined appropriateness to the play data
+        playToExecute.strategic_appropriateness = play.appropriateness_category;
+      } else {
+        // This is a regular play from expert mode
+        playToExecute = play;
+      }
+    
+      const result = await ApiService.simulatePlay(playToExecute, defensiveScenario, minimumYards);
+    
+      // If this was a strategic play, override the appropriateness with the pre-determined one
+      if (gameMode === 'learner' && play.appropriateness_category) {
+        result.appropriateness_category = play.appropriateness_category;
+      }
+    
       setPlayResult(result);
     } catch (error) {
       Alert.alert('Error', 'Could not simulate play.');
@@ -262,19 +321,28 @@ export default function GameScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonHeader}>
-          <Text style={styles.backButtonHeaderText}>← Home</Text>
-        </TouchableOpacity>
-        <Text style={styles.titleLarge}>🛡️ Read the Defense</Text>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.headerActionButton}>
-            <Text style={styles.headerActionButtonText}>⚙️ Settings</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={resetScenario} style={styles.headerActionButton}>
-            <Text style={styles.headerActionButtonText}>🎲 New</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+  <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonHeader}>
+    <Text style={styles.backButtonHeaderText}>← Home</Text>
+  </TouchableOpacity>
+  <Text style={styles.titleLarge}>🛡️ Read the Defense</Text>
+  <View style={styles.headerButtons}>
+    {/* ADD GAME MODE TOGGLE */}
+    <TouchableOpacity 
+      onPress={() => setGameMode(gameMode === 'learner' ? 'expert' : 'learner')} 
+      style={[styles.headerActionButton, gameMode === 'learner' ? styles.learnerModeButton : styles.expertModeButton]}
+    >
+      <Text style={styles.headerActionButtonText}>
+        {gameMode === 'learner' ? '🎓 Learner' : '⚡ Expert'}
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.headerActionButton}>
+      <Text style={styles.headerActionButtonText}>⚙️ Settings</Text>
+    </TouchableOpacity>
+    <TouchableOpacity onPress={resetScenario} style={styles.headerActionButton}>
+      <Text style={styles.headerActionButtonText}>🎲 New</Text>
+    </TouchableOpacity>
+  </View>
+</View>
 
       <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.scrollContentContainer}>
         <View style={isLandscape ? styles.horizontalContent : styles.verticalContent}>
@@ -356,64 +424,96 @@ export default function GameScreen({ navigation }) {
           </View>
 
           {/* Right Panel - Offensive Selections */}
-          <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
-            {!selectedFormation ? (
-              // Formation Selection
-              <>
-                <Text style={styles.sectionTitleLarge}>⚔️ Select Your Formation</Text>
-                <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
-                  {offensiveFormations.map((formation, index) => (
-                    <TouchableOpacity 
-                      key={index}
-                      style={styles.formationButtonLarge}
-                      onPress={() => selectFormation(formation)}
-                    >
-                      <Text style={styles.formationButtonTitle}>
-                        {getFormationEmoji(formation.name)} {formation.display_name}
-                      </Text>
-                      <Text style={styles.formationButtonSubtitle}>
-                        {formation.personnel} • {formation.description}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </>
-            ) : (
-              // Play Selection
-              <>
-                <View style={styles.playSelectionHeader}>
-                  <Text style={styles.sectionTitleLarge}>🏈 Select Your Play</Text>
-                  <TouchableOpacity 
-                    style={styles.changeFormationButton}
-                    onPress={() => setSelectedFormation(null)}
-                  >
-                    <Text style={styles.changeFormationButtonText}>← Change Formation</Text>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text style={styles.selectedFormationText}>
-                  Formation: {selectedFormation.display_name}
-                </Text>
-                
-                <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
-                  {formationPlays.map((play, index) => (
-                    <TouchableOpacity 
-                      key={index}
-                      style={styles.playButtonLarge}
-                      onPress={() => executePlay(play)}
-                    >
-                      <Text style={styles.playButtonTitle}>
-                        {play.type === 'Pass' ? '🎯' : '🏃'} {play.name}
-                      </Text>
-                      <Text style={styles.playButtonSubtitle}>
-                        {play.concept} • {play.type}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </>
-            )}
-          </View>
+<View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
+  {gameMode === 'learner' ? (
+    // LEARNER MODE: Show 5 strategic plays immediately (no formation selection)
+    <>
+      <Text style={styles.sectionTitleLarge}>🎓 Strategic Options</Text>
+      <Text style={styles.gameModeDescription}>
+        5 plays selected for this defense. Make your read!
+      </Text>
+      
+      {strategicPlays ? (
+        <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
+          {playShuffleOrder.map((play, index) => (
+            <TouchableOpacity 
+              key={index}
+              style={styles.strategicPlayButton}
+              onPress={() => executePlay(play)}
+            >
+              <Text style={styles.strategicPlayTitle}>
+  Option {index + 1}: {play.play_data?.name || play.comprehensive_data?.name}
+</Text>
+<Text style={styles.strategicPlaySubtitle}>
+  {play.formation_name} • {play.play_data?.type} • {play.play_data?.concept}
+</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      ) : (
+        <Text style={styles.loadingMessage}>Loading strategic plays...</Text>
+      )}
+    </>
+  ) : (
+    // EXPERT MODE: Formation selection then plays (existing flow)
+    !selectedFormation ? (
+      // Formation Selection
+      <>
+        <Text style={styles.sectionTitleLarge}>⚔️ Select Your Formation</Text>
+        <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
+          {offensiveFormations.map((formation, index) => (
+            <TouchableOpacity 
+              key={index}
+              style={styles.formationButtonLarge}
+              onPress={() => selectFormation(formation)}
+            >
+              <Text style={styles.formationButtonTitle}>
+                {getFormationEmoji(formation.name)} {formation.display_name}
+              </Text>
+              <Text style={styles.formationButtonSubtitle}>
+                {formation.personnel} • {formation.description}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </>
+    ) : (
+      // Play Selection for Expert Mode
+      <>
+        <View style={styles.playSelectionHeader}>
+          <Text style={styles.sectionTitleLarge}>🏈 Select Your Play</Text>
+          <TouchableOpacity 
+            style={styles.changeFormationButton}
+            onPress={() => setSelectedFormation(null)}
+          >
+            <Text style={styles.changeFormationButtonText}>← Change Formation</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={styles.selectedFormationText}>
+          Formation: {selectedFormation.display_name}
+        </Text>
+        
+        <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
+          {formationPlays.map((play, index) => (
+            <TouchableOpacity 
+              key={index}
+              style={styles.playButtonLarge}
+              onPress={() => executePlay(play)}
+            >
+              <Text style={styles.playButtonTitle}>
+                {play.type === 'Pass' ? '🎯' : '🏃'} {play.name}
+              </Text>
+              <Text style={styles.playButtonSubtitle}>
+                {play.concept} • {play.type}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </>
+    )
+  )}
+</View>
         </View>
       </ScrollView>
 
@@ -899,4 +999,42 @@ const styles = StyleSheet.create({
     color: '#1f4e79',
     fontWeight: '600',
   },
+  learnerModeButton: {
+  backgroundColor: '#10b981',
+},
+expertModeButton: {
+  backgroundColor: '#6366f1', 
+},
+gameModeDescription: {
+  fontSize: 14,
+  color: '#6b7280',
+  fontStyle: 'italic',
+  marginBottom: 16,
+  textAlign: 'center',
+},
+strategicPlayButton: {
+  backgroundColor: '#f0f9ff',
+  borderWidth: 2,
+  borderColor: '#0ea5e9',
+  borderRadius: 10,
+  padding: 16,
+  marginBottom: 12,
+},
+strategicPlayTitle: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#0c4a6e',
+  marginBottom: 4,
+},
+strategicPlaySubtitle: {
+  fontSize: 14,
+  color: '#0369a1',
+},
+loadingMessage: {
+  fontSize: 16,
+  color: '#6b7280',
+  textAlign: 'center',
+  fontStyle: 'italic',
+  marginTop: 20,
+},
 });
