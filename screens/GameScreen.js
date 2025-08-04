@@ -67,6 +67,13 @@ export default function GameScreen({ navigation }) {
     coverage_adjustment: false,
     field_visual: true
   });
+  const [gameStats, setGameStats] = useState({
+    total_plays: 0,
+    successful_plays: 0,
+    perfect_calls: 0,
+    terrible_calls: 0,
+    total_yards: 0
+  });
   const [gameMode, setGameMode] = useState('learner'); // 'learner' or 'expert'
   const [strategicPlays, setStrategicPlays] = useState(null);
   const [playShuffleOrder, setPlayShuffleOrder] = useState([]);
@@ -76,6 +83,7 @@ export default function GameScreen({ navigation }) {
     loadDefensiveScenario();
     loadOffensiveFormations();
     loadVisibilitySettings();
+    loadGameStats();
   }, []);
 
   // Load visibility settings when screen gains focus
@@ -87,18 +95,49 @@ export default function GameScreen({ navigation }) {
   }, [navigation]);
 
   const loadVisibilitySettings = async () => {
-  try {
-    const savedSettings = await AsyncStorage.getItem('visibilitySettings');
-    console.log('Loaded settings from storage:', savedSettings); // Add this line
-    if (savedSettings) {
-      const parsedSettings = JSON.parse(savedSettings);
-      console.log('Parsed settings:', parsedSettings); // Add this line
-      setVisibilitySettings(parsedSettings);
+    try {
+      const savedSettings = await AsyncStorage.getItem('visibilitySettings');
+      console.log('Loaded settings from storage:', savedSettings); // Add this line
+      if (savedSettings) {
+        const parsedSettings = JSON.parse(savedSettings);
+        console.log('Parsed settings:', parsedSettings); // Add this line
+        setVisibilitySettings(parsedSettings);
+      }
+    } catch (error) {
+      console.error('Error loading visibility settings:', error);
     }
-  } catch (error) {
-    console.error('Error loading visibility settings:', error);
-  }
-};
+  };
+
+  const loadGameStats = async () => {
+    try {
+      const savedStats = await AsyncStorage.getItem('gameStats');
+      if (savedStats) {
+        const parsedStats = JSON.parse(savedStats);
+        setGameStats(parsedStats);
+      }
+    } catch (error) {
+      console.error('Error loading game stats:', error);
+    }
+  };
+
+  const updateGameStats = async (result) => {
+    try {
+      const newStats = {
+        total_plays: gameStats.total_plays + 1,
+        successful_plays: gameStats.successful_plays + (result.success ? 1 : 0),
+        perfect_calls: gameStats.perfect_calls + (result.appropriateness_category === 'Perfect' ? 1 : 0),
+        terrible_calls: gameStats.terrible_calls + (result.appropriateness_category === 'Terrible' ? 1 : 0),
+        total_yards: gameStats.total_yards + result.yards_gained
+      };
+    
+      setGameStats(newStats);
+    
+      // Save to AsyncStorage
+      await AsyncStorage.setItem('gameStats', JSON.stringify(newStats));
+    } catch (error) {
+      console.error('Error updating game stats:', error);
+    }
+  };
 
   const loadDefensiveScenario = async () => {
     try {
@@ -194,6 +233,8 @@ export default function GameScreen({ navigation }) {
       if (gameMode === 'learner' && play.appropriateness_category) {
         result.appropriateness_category = play.appropriateness_category;
       }
+
+      await updateGameStats(result);
     
       setPlayResult(result);
     } catch (error) {
@@ -201,6 +242,23 @@ export default function GameScreen({ navigation }) {
       console.error('Error simulating play:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resetStats = async () => {
+    try {
+      const emptyStats = {
+        total_plays: 0,
+        successful_plays: 0,
+        perfect_calls: 0,
+        terrible_calls: 0,
+        total_yards: 0
+      };
+    
+      setGameStats(emptyStats);
+      await AsyncStorage.setItem('gameStats', JSON.stringify(emptyStats));
+    } catch (error) {
+      console.error('Error resetting stats:', error);
     }
   };
 
@@ -423,7 +481,7 @@ export default function GameScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Right Panel - Offensive Selections */}
+{/* Right Panel - Offensive Selections */}
 <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
   {gameMode === 'learner' ? (
     // LEARNER MODE: Show 5 strategic plays immediately (no formation selection)
@@ -442,16 +500,59 @@ export default function GameScreen({ navigation }) {
               onPress={() => executePlay(play)}
             >
               <Text style={styles.strategicPlayTitle}>
-  Option {index + 1}: {play.play_data?.name || play.comprehensive_data?.name}
-</Text>
-<Text style={styles.strategicPlaySubtitle}>
-  {play.formation_name} • {play.play_data?.type} • {play.play_data?.concept}
-</Text>
+                Option {index + 1}: {play.play_data?.name || play.comprehensive_data?.name}
+              </Text>
+              <Text style={styles.strategicPlaySubtitle}>
+                {play.formation_name} • {play.play_data?.type} • {play.play_data?.concept}
+              </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       ) : (
         <Text style={styles.loadingMessage}>Loading strategic plays...</Text>
+      )}
+
+      {/* Compact Stats Display for Learner Mode */}
+      {gameStats.total_plays > 0 && (
+        <View style={styles.statsContainerCompact}>
+          <View style={styles.statsHeaderCompact}>
+            <Text style={styles.statsTitleCompact}>📊 Game Stats</Text>
+            <TouchableOpacity style={styles.resetStatsButtonCompact} onPress={resetStats}>
+              <Text style={styles.resetStatsTextCompact}>Reset</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.statsRowCompact}>
+            <View style={styles.statItemCompact}>
+              <Text style={styles.statNumberCompact}>{gameStats.total_plays}</Text>
+              <Text style={styles.statLabelCompact}>Plays</Text>
+            </View>
+            
+            <View style={styles.statItemCompact}>
+              <Text style={styles.statNumberCompact}>
+                {gameStats.total_plays > 0 ? ((gameStats.successful_plays / gameStats.total_plays) * 100).toFixed(0) : '0'}%
+              </Text>
+              <Text style={styles.statLabelCompact}>Success</Text>
+            </View>
+            
+            <View style={styles.statItemCompact}>
+              <Text style={styles.statNumberCompact}>{gameStats.perfect_calls}</Text>
+              <Text style={styles.statLabelCompact}>Perfect</Text>
+            </View>
+            
+            <View style={styles.statItemCompact}>
+              <Text style={styles.statNumberCompact}>{gameStats.terrible_calls}</Text>
+              <Text style={styles.statLabelCompact}>Terrible</Text>
+            </View>
+            
+            <View style={styles.statItemCompact}>
+              <Text style={styles.statNumberCompact}>
+                {gameStats.total_plays > 0 ? (gameStats.total_yards / gameStats.total_plays).toFixed(1) : '0.0'}
+              </Text>
+              <Text style={styles.statLabelCompact}>Avg Yds</Text>
+            </View>
+          </View>
+        </View>
       )}
     </>
   ) : (
@@ -476,6 +577,49 @@ export default function GameScreen({ navigation }) {
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* Compact Stats Display for Expert Mode - Formation Selection */}
+        {gameStats.total_plays > 0 && (
+          <View style={styles.statsContainerCompact}>
+            <View style={styles.statsHeaderCompact}>
+              <Text style={styles.statsTitleCompact}>📊 Game Stats</Text>
+              <TouchableOpacity style={styles.resetStatsButtonCompact} onPress={resetStats}>
+                <Text style={styles.resetStatsTextCompact}>Reset</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.statsRowCompact}>
+              <View style={styles.statItemCompact}>
+                <Text style={styles.statNumberCompact}>{gameStats.total_plays}</Text>
+                <Text style={styles.statLabelCompact}>Plays</Text>
+              </View>
+              
+              <View style={styles.statItemCompact}>
+                <Text style={styles.statNumberCompact}>
+                  {gameStats.total_plays > 0 ? ((gameStats.successful_plays / gameStats.total_plays) * 100).toFixed(0) : '0'}%
+                </Text>
+                <Text style={styles.statLabelCompact}>Success</Text>
+              </View>
+              
+              <View style={styles.statItemCompact}>
+                <Text style={styles.statNumberCompact}>{gameStats.perfect_calls}</Text>
+                <Text style={styles.statLabelCompact}>Perfect</Text>
+              </View>
+              
+              <View style={styles.statItemCompact}>
+                <Text style={styles.statNumberCompact}>{gameStats.terrible_calls}</Text>
+                <Text style={styles.statLabelCompact}>Terrible</Text>
+              </View>
+              
+              <View style={styles.statItemCompact}>
+                <Text style={styles.statNumberCompact}>
+                  {gameStats.total_plays > 0 ? (gameStats.total_yards / gameStats.total_plays).toFixed(1) : '0.0'}
+                </Text>
+                <Text style={styles.statLabelCompact}>Avg Yds</Text>
+              </View>
+            </View>
+          </View>
+        )}
       </>
     ) : (
       // Play Selection for Expert Mode
@@ -510,6 +654,49 @@ export default function GameScreen({ navigation }) {
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* Compact Stats Display for Expert Mode - Play Selection */}
+        {gameStats.total_plays > 0 && (
+          <View style={styles.statsContainerCompact}>
+            <View style={styles.statsHeaderCompact}>
+              <Text style={styles.statsTitleCompact}>📊 Game Stats</Text>
+              <TouchableOpacity style={styles.resetStatsButtonCompact} onPress={resetStats}>
+                <Text style={styles.resetStatsTextCompact}>Reset</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.statsRowCompact}>
+              <View style={styles.statItemCompact}>
+                <Text style={styles.statNumberCompact}>{gameStats.total_plays}</Text>
+                <Text style={styles.statLabelCompact}>Plays</Text>
+              </View>
+              
+              <View style={styles.statItemCompact}>
+                <Text style={styles.statNumberCompact}>
+                  {gameStats.total_plays > 0 ? ((gameStats.successful_plays / gameStats.total_plays) * 100).toFixed(0) : '0'}%
+                </Text>
+                <Text style={styles.statLabelCompact}>Success</Text>
+              </View>
+              
+              <View style={styles.statItemCompact}>
+                <Text style={styles.statNumberCompact}>{gameStats.perfect_calls}</Text>
+                <Text style={styles.statLabelCompact}>Perfect</Text>
+              </View>
+              
+              <View style={styles.statItemCompact}>
+                <Text style={styles.statNumberCompact}>{gameStats.terrible_calls}</Text>
+                <Text style={styles.statLabelCompact}>Terrible</Text>
+              </View>
+              
+              <View style={styles.statItemCompact}>
+                <Text style={styles.statNumberCompact}>
+                  {gameStats.total_plays > 0 ? (gameStats.total_yards / gameStats.total_plays).toFixed(1) : '0.0'}
+                </Text>
+                <Text style={styles.statLabelCompact}>Avg Yds</Text>
+              </View>
+            </View>
+          </View>
+        )}
       </>
     )
   )}
@@ -1001,40 +1188,94 @@ const styles = StyleSheet.create({
   },
   learnerModeButton: {
   backgroundColor: '#10b981',
+  },
+  expertModeButton: {
+    backgroundColor: '#6366f1', 
+  },
+  gameModeDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontStyle: 'italic',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  strategicPlayButton: {
+    backgroundColor: '#f0f9ff',
+    borderWidth: 2,
+    borderColor: '#0ea5e9',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 12,
+  },
+  strategicPlayTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0c4a6e',
+    marginBottom: 4,
+  },
+  strategicPlaySubtitle: {
+    fontSize: 14,
+    color: '#0369a1',
+  },
+  loadingMessage: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 20,
+  },
+  // Compact Stats styles
+statsContainerCompact: {
+  backgroundColor: 'white',
+  borderRadius: 8,
+  padding: 12,
+  marginTop: 12,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.1,
+  shadowRadius: 2,
+  elevation: 2,
 },
-expertModeButton: {
-  backgroundColor: '#6366f1', 
+statsHeaderCompact: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 8,
 },
-gameModeDescription: {
-  fontSize: 14,
-  color: '#6b7280',
-  fontStyle: 'italic',
-  marginBottom: 16,
-  textAlign: 'center',
+statsTitleCompact: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: '#1f4e79',
 },
-strategicPlayButton: {
-  backgroundColor: '#f0f9ff',
-  borderWidth: 2,
-  borderColor: '#0ea5e9',
-  borderRadius: 10,
-  padding: 16,
-  marginBottom: 12,
+resetStatsButtonCompact: {
+  backgroundColor: '#dc2626',
+  paddingVertical: 4,
+  paddingHorizontal: 8,
+  borderRadius: 4,
 },
-strategicPlayTitle: {
+resetStatsTextCompact: {
+  color: 'white',
+  fontSize: 12,
+  fontWeight: '600',
+},
+statsRowCompact: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+},
+statItemCompact: {
+  alignItems: 'center',
+  flex: 1,
+},
+statNumberCompact: {
   fontSize: 18,
   fontWeight: 'bold',
-  color: '#0c4a6e',
-  marginBottom: 4,
+  color: '#1f4e79',
 },
-strategicPlaySubtitle: {
-  fontSize: 14,
-  color: '#0369a1',
-},
-loadingMessage: {
-  fontSize: 16,
+statLabelCompact: {
+  fontSize: 10,
   color: '#6b7280',
   textAlign: 'center',
-  fontStyle: 'italic',
-  marginTop: 20,
+  marginTop: 2,
 },
 });
