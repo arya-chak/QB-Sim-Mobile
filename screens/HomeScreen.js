@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView, Dimensions } from 'react-native';
-import ApiService from '../ApiService';
+import ApiService from '../services/ApiService';
 
 // Hook to track orientation changes
 function useOrientation() {

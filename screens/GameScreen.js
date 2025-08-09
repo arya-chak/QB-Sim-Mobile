@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Alert, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ApiService from '../ApiService';
+import ApiService from '../services/ApiService';
+import SVGFieldVisualizer from '../components/field/SVGFieldVisualizer';
 
 // Hook to track orientation changes
 function useOrientation() {
@@ -74,7 +75,7 @@ export default function GameScreen({ navigation }) {
     terrible_calls: 0,
     total_yards: 0
   });
-  const [gameMode, setGameMode] = useState('learner'); // 'learner' or 'expert'
+  const [gameMode, setGameMode] = useState('learner');
   const [strategicPlays, setStrategicPlays] = useState(null);
   const [playShuffleOrder, setPlayShuffleOrder] = useState([]);
 
@@ -97,10 +98,10 @@ export default function GameScreen({ navigation }) {
   const loadVisibilitySettings = async () => {
     try {
       const savedSettings = await AsyncStorage.getItem('visibilitySettings');
-      console.log('Loaded settings from storage:', savedSettings); // Add this line
+      console.log('Loaded settings from storage:', savedSettings);
       if (savedSettings) {
         const parsedSettings = JSON.parse(savedSettings);
-        console.log('Parsed settings:', parsedSettings); // Add this line
+        console.log('Parsed settings:', parsedSettings);
         setVisibilitySettings(parsedSettings);
       }
     } catch (error) {
@@ -276,6 +277,17 @@ export default function GameScreen({ navigation }) {
     // Keep the same scenario, don't reload
   };
 
+  const handlePlayerPress = (player) => {
+    Alert.alert(
+      player.label,
+      `Position: ${player.pos}\nType: ${player.type === 'dline' ? 'Defensive Line' : 
+             player.type === 'lb' ? 'Linebacker' : 'Defensive Back'}${
+             player.isBlitzing ? '\n🔥 BLITZING!' : ''
+           }`,
+      [{ text: 'OK' }]
+    );
+  };
+
   if (loading && !defensiveScenario) {
     return (
       <SafeAreaView style={styles.container}>
@@ -315,7 +327,7 @@ export default function GameScreen({ navigation }) {
                   {playResult.success ? '✅ SUCCESS!' : '❌ FAILURE!'}
                 </Text>
                 <Text style={styles.resultYards}>
-                  {playResult.yards_gained} yards gained (needed {playResult.yards_needed})
+                  {playResult.yards_gained} yards gained (needed {minimumYards})
                 </Text>
               </View>
 
@@ -333,7 +345,7 @@ export default function GameScreen({ navigation }) {
                 </View>
                 <Text style={styles.description}>{playResult.description}</Text>
                 
-                {/* Learning Analysis - Similar to Streamlit version */}
+                {/* Learning Analysis */}
                 <View style={styles.learningBox}>
                   <Text style={styles.learningTitle}>🧑‍🏫 Learning Analysis</Text>
                   {renderLearningAnalysis(playResult.appropriateness_category)}
@@ -379,28 +391,28 @@ export default function GameScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.headerBar}>
-  <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonHeader}>
-    <Text style={styles.backButtonHeaderText}>← Home</Text>
-  </TouchableOpacity>
-  <Text style={styles.titleLarge}>🛡️ Read the Defense</Text>
-  <View style={styles.headerButtons}>
-    {/* ADD GAME MODE TOGGLE */}
-    <TouchableOpacity 
-      onPress={() => setGameMode(gameMode === 'learner' ? 'expert' : 'learner')} 
-      style={[styles.headerActionButton, gameMode === 'learner' ? styles.learnerModeButton : styles.expertModeButton]}
-    >
-      <Text style={styles.headerActionButtonText}>
-        {gameMode === 'learner' ? '🎓 Learner' : '⚡ Expert'}
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.headerActionButton}>
-      <Text style={styles.headerActionButtonText}>⚙️ Settings</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={resetScenario} style={styles.headerActionButton}>
-      <Text style={styles.headerActionButtonText}>🎲 New</Text>
-    </TouchableOpacity>
-  </View>
-</View>
+        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonHeader}>
+          <Text style={styles.backButtonHeaderText}>← Home</Text>
+        </TouchableOpacity>
+        <Text style={styles.titleLarge}>🛡️ Read the Defense</Text>
+        <View style={styles.headerButtons}>
+          {/* Game Mode Toggle */}
+          <TouchableOpacity 
+            onPress={() => setGameMode(gameMode === 'learner' ? 'expert' : 'learner')} 
+            style={[styles.headerActionButton, gameMode === 'learner' ? styles.learnerModeButton : styles.expertModeButton]}
+          >
+            <Text style={styles.headerActionButtonText}>
+              {gameMode === 'learner' ? '🎓 Learner' : '⚡ Expert'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={styles.headerActionButton}>
+            <Text style={styles.headerActionButtonText}>⚙️ Settings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={resetScenario} style={styles.headerActionButton}>
+            <Text style={styles.headerActionButtonText}>🎲 New</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
       <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.scrollContentContainer}>
         <View style={isLandscape ? styles.horizontalContent : styles.verticalContent}>
@@ -469,238 +481,234 @@ export default function GameScreen({ navigation }) {
               </View>
             )}
 
-            {/* Placeholder for field visual */}
-            <View style={styles.fieldVisualBox}>
-              <Text style={styles.fieldVisualTitle}>🏈 Field Visual</Text>
-              <View style={styles.fieldPlaceholder}>
-                <Text style={styles.fieldPlaceholderText}>
-                  [X's and O's diagram]{'\n'}
-                  Coming in next update
-                </Text>
+            {/* SVG Field Visual */}
+            {visibilitySettings.field_visual && defensiveScenario && (
+              <View style={styles.fieldVisualBox}>
+                <Text style={styles.fieldVisualTitle}>🏈 Defensive Formation</Text>
+                <Text style={{color: 'red', fontSize: 12}}>
+      Debug: Formation = "{defensiveScenario.formation_data.formation_name}"
+    </Text>
+    <Text style={{color: 'red', fontSize: 12}}>
+      Debug: Coverage = "{defensiveScenario.coverage_name}"
+    </Text>
+                <SVGFieldVisualizer 
+                  formationName={defensiveScenario.formation_data.formation_name.replace(' Defense', '').toLowerCase()}
+                  yardsToGo={minimumYards}
+                  coverageName={defensiveScenario.coverage_name}
+                  showCoverage={visibilitySettings.coverage_name}
+                  showBlitz={visibilitySettings.blitz_name}
+                  onPlayerPress={handlePlayerPress}
+                />
               </View>
-            </View>
+            )}
           </View>
 
-{/* Right Panel - Offensive Selections */}
-<View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
-  {gameMode === 'learner' ? (
-    // LEARNER MODE: Show 5 strategic plays immediately (no formation selection)
-    <>
-      <Text style={styles.sectionTitleLarge}>🎓 Strategic Options</Text>
-      <Text style={styles.gameModeDescription}>
-        5 plays selected for this defense. Make your read!
-      </Text>
-      
-      {strategicPlays ? (
-        <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
-          {playShuffleOrder.map((play, index) => (
-            <TouchableOpacity 
-              key={index}
-              style={styles.strategicPlayButton}
-              onPress={() => executePlay(play)}
-            >
-              <Text style={styles.strategicPlayTitle}>
-                Option {index + 1}: {play.play_data?.name || play.comprehensive_data?.name}
-              </Text>
-              <Text style={styles.strategicPlaySubtitle}>
-                {play.formation_name} • {play.play_data?.type} • {play.play_data?.concept}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      ) : (
-        <Text style={styles.loadingMessage}>Loading strategic plays...</Text>
-      )}
+          {/* Right Panel - Offensive Selections */}
+          <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
+            {gameMode === 'learner' ? (
+              // LEARNER MODE: Show 5 strategic plays immediately
+              <>
+                <Text style={styles.sectionTitleLarge}>🎓 Strategic Options</Text>
+                <Text style={styles.gameModeDescription}>
+                  5 plays selected for this defense. Make your read!
+                </Text>
+                
+                {strategicPlays ? (
+                  <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
+                    {playShuffleOrder.map((play, index) => (
+                      <TouchableOpacity 
+                        key={index}
+                        style={styles.strategicPlayButton}
+                        onPress={() => executePlay(play)}
+                      >
+                        <Text style={styles.strategicPlayTitle}>
+                          Option {index + 1}: {play.play_data?.name || play.comprehensive_data?.name}
+                        </Text>
+                        <Text style={styles.strategicPlaySubtitle}>
+                          {play.formation_name} • {play.play_data?.type} • {play.play_data?.concept}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <Text style={styles.loadingMessage}>Loading strategic plays...</Text>
+                )}
 
-      {/* Compact Stats Display for Learner Mode */}
-      {gameStats.total_plays > 0 && (
-        <View style={styles.statsContainerCompact}>
-          <View style={styles.statsHeaderCompact}>
-            <Text style={styles.statsTitleCompact}>📊 Game Stats</Text>
-            <TouchableOpacity style={styles.resetStatsButtonCompact} onPress={resetStats}>
-              <Text style={styles.resetStatsTextCompact}>Reset</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.statsRowCompact}>
-            <View style={styles.statItemCompact}>
-              <Text style={styles.statNumberCompact}>{gameStats.total_plays}</Text>
-              <Text style={styles.statLabelCompact}>Plays</Text>
-            </View>
-            
-            <View style={styles.statItemCompact}>
-              <Text style={styles.statNumberCompact}>
-                {gameStats.total_plays > 0 ? ((gameStats.successful_plays / gameStats.total_plays) * 100).toFixed(0) : '0'}%
-              </Text>
-              <Text style={styles.statLabelCompact}>Success</Text>
-            </View>
-            
-            <View style={styles.statItemCompact}>
-              <Text style={styles.statNumberCompact}>{gameStats.perfect_calls}</Text>
-              <Text style={styles.statLabelCompact}>Perfect</Text>
-            </View>
-            
-            <View style={styles.statItemCompact}>
-              <Text style={styles.statNumberCompact}>{gameStats.terrible_calls}</Text>
-              <Text style={styles.statLabelCompact}>Terrible</Text>
-            </View>
-            
-            <View style={styles.statItemCompact}>
-              <Text style={styles.statNumberCompact}>
-                {gameStats.total_plays > 0 ? (gameStats.total_yards / gameStats.total_plays).toFixed(1) : '0.0'}
-              </Text>
-              <Text style={styles.statLabelCompact}>Avg Yds</Text>
-            </View>
-          </View>
-        </View>
-      )}
-    </>
-  ) : (
-    // EXPERT MODE: Formation selection then plays (existing flow)
-    !selectedFormation ? (
-      // Formation Selection
-      <>
-        <Text style={styles.sectionTitleLarge}>⚔️ Select Your Formation</Text>
-        <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
-          {offensiveFormations.map((formation, index) => (
-            <TouchableOpacity 
-              key={index}
-              style={styles.formationButtonLarge}
-              onPress={() => selectFormation(formation)}
-            >
-              <Text style={styles.formationButtonTitle}>
-                {getFormationEmoji(formation.name)} {formation.display_name}
-              </Text>
-              <Text style={styles.formationButtonSubtitle}>
-                {formation.personnel} • {formation.description}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+                {/* Compact Stats Display for Learner Mode */}
+                {gameStats.total_plays > 0 && (
+                  <View style={styles.statsContainerCompact}>
+                    <View style={styles.statsHeaderCompact}>
+                      <Text style={styles.statsTitleCompact}>📊 Game Stats</Text>
+                      <TouchableOpacity style={styles.resetStatsButtonCompact} onPress={resetStats}>
+                        <Text style={styles.resetStatsTextCompact}>Reset</Text>
+                      </TouchableOpacity>
+                    </View>
+                    
+                    <View style={styles.statsRowCompact}>
+                      <View style={styles.statItemCompact}>
+                        <Text style={styles.statNumberCompact}>{gameStats.total_plays}</Text>
+                        <Text style={styles.statLabelCompact}>Plays</Text>
+                      </View>
+                      
+                      <View style={styles.statItemCompact}>
+                        <Text style={styles.statNumberCompact}>
+                          {gameStats.total_plays > 0 ? ((gameStats.successful_plays / gameStats.total_plays) * 100).toFixed(0) : '0'}%
+                        </Text>
+                        <Text style={styles.statLabelCompact}>Success</Text>
+                      </View>
+                      
+                      <View style={styles.statItemCompact}>
+                        <Text style={styles.statNumberCompact}>{gameStats.perfect_calls}</Text>
+                        <Text style={styles.statLabelCompact}>Perfect</Text>
+                      </View>
+                      
+                      <View style={styles.statItemCompact}>
+                        <Text style={styles.statNumberCompact}>{gameStats.terrible_calls}</Text>
+                        <Text style={styles.statLabelCompact}>Terrible</Text>
+                      </View>
+                      
+                      <View style={styles.statItemCompact}>
+                        <Text style={styles.statNumberCompact}>
+                          {gameStats.total_plays > 0 ? (gameStats.total_yards / gameStats.total_plays).toFixed(1) : '0.0'}
+                        </Text>
+                        <Text style={styles.statLabelCompact}>Avg Yds</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              </>
+            ) : (
+              // EXPERT MODE: Formation selection then plays
+              !selectedFormation ? (
+                // Formation Selection
+                <>
+                  <Text style={styles.sectionTitleLarge}>⚔️ Select Your Formation</Text>
+                  <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
+                    {offensiveFormations.map((formation, index) => (
+                      <TouchableOpacity 
+                        key={index}
+                        style={styles.formationButtonLarge}
+                        onPress={() => selectFormation(formation)}
+                      >
+                        <Text style={styles.formationButtonTitle}>
+                          {getFormationEmoji(formation.name)} {formation.display_name}
+                        </Text>
+                        <Text style={styles.formationButtonSubtitle}>
+                          {formation.personnel} • {formation.description}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
 
-        {/* Compact Stats Display for Expert Mode - Formation Selection */}
-        {gameStats.total_plays > 0 && (
-          <View style={styles.statsContainerCompact}>
-            <View style={styles.statsHeaderCompact}>
-              <Text style={styles.statsTitleCompact}>📊 Game Stats</Text>
-              <TouchableOpacity style={styles.resetStatsButtonCompact} onPress={resetStats}>
-                <Text style={styles.resetStatsTextCompact}>Reset</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.statsRowCompact}>
-              <View style={styles.statItemCompact}>
-                <Text style={styles.statNumberCompact}>{gameStats.total_plays}</Text>
-                <Text style={styles.statLabelCompact}>Plays</Text>
-              </View>
-              
-              <View style={styles.statItemCompact}>
-                <Text style={styles.statNumberCompact}>
-                  {gameStats.total_plays > 0 ? ((gameStats.successful_plays / gameStats.total_plays) * 100).toFixed(0) : '0'}%
-                </Text>
-                <Text style={styles.statLabelCompact}>Success</Text>
-              </View>
-              
-              <View style={styles.statItemCompact}>
-                <Text style={styles.statNumberCompact}>{gameStats.perfect_calls}</Text>
-                <Text style={styles.statLabelCompact}>Perfect</Text>
-              </View>
-              
-              <View style={styles.statItemCompact}>
-                <Text style={styles.statNumberCompact}>{gameStats.terrible_calls}</Text>
-                <Text style={styles.statLabelCompact}>Terrible</Text>
-              </View>
-              
-              <View style={styles.statItemCompact}>
-                <Text style={styles.statNumberCompact}>
-                  {gameStats.total_plays > 0 ? (gameStats.total_yards / gameStats.total_plays).toFixed(1) : '0.0'}
-                </Text>
-                <Text style={styles.statLabelCompact}>Avg Yds</Text>
-              </View>
-            </View>
+                  {/* Compact Stats Display for Expert Mode - Formation Selection */}
+                  {gameStats.total_plays > 0 && (
+                    <View style={styles.statsContainerCompact}>
+                      <View style={styles.statsHeaderCompact}>
+                        <Text style={styles.statsTitleCompact}>📊 Game Stats</Text>
+                        <TouchableOpacity style={styles.resetStatsButtonCompact} onPress={resetStats}>
+                          <Text style={styles.resetStatsTextCompact}>Reset</Text>
+                        </TouchableOpacity>
+                      </View>
+                      
+                      <View style={styles.statsRowCompact}>
+                        <View style={styles.statItemCompact}>
+                          <Text style={styles.statNumberCompact}>{gameStats.total_plays}</Text>
+                          <Text style={styles.statLabelCompact}>Plays</Text>
+                        </View>
+                        
+                        <View style={styles.statItemCompact}>
+                          <Text style={styles.statNumberCompact}>
+                            {gameStats.total_plays > 0 ? ((gameStats.successful_plays / gameStats.total_plays) * 100).toFixed(0) : '0'}%
+                          </Text>
+                          <Text style={styles.statLabelCompact}>Success</Text>
+                        </View>
+                        
+                        <View style={styles.statItemCompact}>
+                          <Text style={styles.statNumberCompact}>{gameStats.perfect_calls}</Text>
+                          <Text style={styles.statLabelCompact}>Perfect</Text>
+                        </View>
+                        
+                        <View style={styles.statItemCompact}>
+                          <Text style={styles.statNumberCompact}>{gameStats.terrible_calls}</Text>
+                          <Text style={styles.statLabelCompact}>Terrible</Text>
+                        </View>
+                        
+                        <View style={styles.statItemCompact}>
+                          <Text style={styles.statNumberCompact}>
+                            {gameStats.total_plays > 0 ? (gameStats.total_yards / gameStats.total_plays).toFixed(1) : '0.0'}
+                          </Text>
+                          <Text style={styles.statLabelCompact}>Avg Yds</Text>
+                        </View>
+                      </View>
+                    </View>
+                  )}
+                </>
+              ) : (
+                // Play Selection for Expert Mode
+                <>
+                  <View style={styles.playSelectionHeader}>
+                    <Text style={styles.selectedFormationText}>
+                      {selectedFormation ? `Selected: ${selectedFormation.display_name}` : ''}
+                    </Text>
+                    <TouchableOpacity style={styles.changeFormationButton} onPress={() => setSelectedFormation(null)}>
+                      <Text style={styles.changeFormationButtonText}>Change Formation</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
+                    {formationPlays.map((play, index) => (
+                      <TouchableOpacity 
+                        key={index}
+                        style={styles.playButtonLarge}
+                        onPress={() => executePlay(play)}
+                      >
+                        <Text style={styles.playButtonTitle}>{play.name}</Text>
+                        <Text style={styles.playButtonSubtitle}>
+                          {play.type} • {play.concept}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                  {/* Compact Stats Display for Expert Mode - Play Selection */}
+                  {gameStats.total_plays > 0 && (
+                    <View style={styles.statsContainerCompact}>
+                      <View style={styles.statsHeaderCompact}>
+                        <Text style={styles.statsTitleCompact}>📊 Game Stats</Text>
+                        <TouchableOpacity style={styles.resetStatsButtonCompact} onPress={resetStats}>
+                          <Text style={styles.resetStatsTextCompact}>Reset</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.statsRowCompact}>
+                        <View style={styles.statItemCompact}>
+                          <Text style={styles.statNumberCompact}>{gameStats.total_plays}</Text>
+                          <Text style={styles.statLabelCompact}>Plays</Text>
+                        </View>
+                        <View style={styles.statItemCompact}>
+                          <Text style={styles.statNumberCompact}>
+                            {gameStats.total_plays > 0 ? ((gameStats.successful_plays / gameStats.total_plays) * 100).toFixed(0) : '0'}%
+                          </Text>
+                          <Text style={styles.statLabelCompact}>Success</Text>
+                        </View>
+                        <View style={styles.statItemCompact}>
+                          <Text style={styles.statNumberCompact}>{gameStats.perfect_calls}</Text>
+                          <Text style={styles.statLabelCompact}>Perfect</Text>
+                        </View>
+                        <View style={styles.statItemCompact}>
+                          <Text style={styles.statNumberCompact}>{gameStats.terrible_calls}</Text>
+                          <Text style={styles.statLabelCompact}>Terrible</Text>
+                        </View>
+                        <View style={styles.statItemCompact}>
+                          <Text style={styles.statNumberCompact}>
+                            {gameStats.total_plays > 0 ? (gameStats.total_yards / gameStats.total_plays).toFixed(1) : '0.0'}
+                          </Text>
+                          <Text style={styles.statLabelCompact}>Avg Yds</Text>
+                        </View>
+                      </View>
+                    </View>
+                  )}
+                </>
+              )
+            )}
           </View>
-        )}
-      </>
-    ) : (
-      // Play Selection for Expert Mode
-      <>
-        <View style={styles.playSelectionHeader}>
-          <Text style={styles.sectionTitleLarge}>🏈 Select Your Play</Text>
-          <TouchableOpacity 
-            style={styles.changeFormationButton}
-            onPress={() => setSelectedFormation(null)}
-          >
-            <Text style={styles.changeFormationButtonText}>← Change Formation</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <Text style={styles.selectedFormationText}>
-          Formation: {selectedFormation.display_name}
-        </Text>
-        
-        <ScrollView style={styles.selectionScrollView} nestedScrollEnabled={true}>
-          {formationPlays.map((play, index) => (
-            <TouchableOpacity 
-              key={index}
-              style={styles.playButtonLarge}
-              onPress={() => executePlay(play)}
-            >
-              <Text style={styles.playButtonTitle}>
-                {play.type === 'Pass' ? '🎯' : '🏃'} {play.name}
-              </Text>
-              <Text style={styles.playButtonSubtitle}>
-                {play.concept} • {play.type}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Compact Stats Display for Expert Mode - Play Selection */}
-        {gameStats.total_plays > 0 && (
-          <View style={styles.statsContainerCompact}>
-            <View style={styles.statsHeaderCompact}>
-              <Text style={styles.statsTitleCompact}>📊 Game Stats</Text>
-              <TouchableOpacity style={styles.resetStatsButtonCompact} onPress={resetStats}>
-                <Text style={styles.resetStatsTextCompact}>Reset</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.statsRowCompact}>
-              <View style={styles.statItemCompact}>
-                <Text style={styles.statNumberCompact}>{gameStats.total_plays}</Text>
-                <Text style={styles.statLabelCompact}>Plays</Text>
-              </View>
-              
-              <View style={styles.statItemCompact}>
-                <Text style={styles.statNumberCompact}>
-                  {gameStats.total_plays > 0 ? ((gameStats.successful_plays / gameStats.total_plays) * 100).toFixed(0) : '0'}%
-                </Text>
-                <Text style={styles.statLabelCompact}>Success</Text>
-              </View>
-              
-              <View style={styles.statItemCompact}>
-                <Text style={styles.statNumberCompact}>{gameStats.perfect_calls}</Text>
-                <Text style={styles.statLabelCompact}>Perfect</Text>
-              </View>
-              
-              <View style={styles.statItemCompact}>
-                <Text style={styles.statNumberCompact}>{gameStats.terrible_calls}</Text>
-                <Text style={styles.statLabelCompact}>Terrible</Text>
-              </View>
-              
-              <View style={styles.statItemCompact}>
-                <Text style={styles.statNumberCompact}>
-                  {gameStats.total_plays > 0 ? (gameStats.total_yards / gameStats.total_plays).toFixed(1) : '0.0'}
-                </Text>
-                <Text style={styles.statLabelCompact}>Avg Yds</Text>
-              </View>
-            </View>
-          </View>
-        )}
-      </>
-    )
-  )}
-</View>
         </View>
       </ScrollView>
 
@@ -903,35 +911,19 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 
-  // Field Visual
+  // Field Visual - Updated for SVG
   fieldVisualBox: {
     backgroundColor: '#e8f5e8',
     borderRadius: 10,
     borderLeftWidth: 5,
     borderLeftColor: '#10b981',
-    padding: 20,
+    padding: 12,
   },
   fieldVisualTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#10b981',
-    marginBottom: 12,
-  },
-  fieldPlaceholder: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderStyle: 'dashed',
-    borderWidth: 2,
-    borderColor: '#9ca3af',
-  },
-  fieldPlaceholderText: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    fontStyle: 'italic',
+    marginBottom: 8,
   },
 
   // Buttons
@@ -1187,7 +1179,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   learnerModeButton: {
-  backgroundColor: '#10b981',
+    backgroundColor: '#10b981',
   },
   expertModeButton: {
     backgroundColor: '#6366f1', 
@@ -1225,57 +1217,57 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   // Compact Stats styles
-statsContainerCompact: {
-  backgroundColor: 'white',
-  borderRadius: 8,
-  padding: 12,
-  marginTop: 12,
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.1,
-  shadowRadius: 2,
-  elevation: 2,
-},
-statsHeaderCompact: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: 8,
-},
-statsTitleCompact: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  color: '#1f4e79',
-},
-resetStatsButtonCompact: {
-  backgroundColor: '#dc2626',
-  paddingVertical: 4,
-  paddingHorizontal: 8,
-  borderRadius: 4,
-},
-resetStatsTextCompact: {
-  color: 'white',
-  fontSize: 12,
-  fontWeight: '600',
-},
-statsRowCompact: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-},
-statItemCompact: {
-  alignItems: 'center',
-  flex: 1,
-},
-statNumberCompact: {
-  fontSize: 18,
-  fontWeight: 'bold',
-  color: '#1f4e79',
-},
-statLabelCompact: {
-  fontSize: 10,
-  color: '#6b7280',
-  textAlign: 'center',
-  marginTop: 2,
-},
+  statsContainerCompact: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  statsHeaderCompact: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statsTitleCompact: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f4e79',
+  },
+  resetStatsButtonCompact: {
+    backgroundColor: '#dc2626',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+  },
+  resetStatsTextCompact: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statsRowCompact: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  statItemCompact: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumberCompact: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f4e79',
+  },
+  statLabelCompact: {
+    fontSize: 10,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginTop: 2,
+  },
 });
