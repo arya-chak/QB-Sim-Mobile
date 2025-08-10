@@ -490,8 +490,8 @@ export default function GameScreen({ navigation }) {
                   formationName={defensiveScenario.formation_data.formation_name.replace(' Defense', '').toLowerCase()}
                   yardsToGo={minimumYards}
                   coverageName={defensiveScenario.coverage_name}
-                  showCoverage={visibilitySettings.coverage_name}
-                  showBlitz={visibilitySettings.blitz_name}
+                  showCoverage={false}
+                  showBlitz={false}
                   onPlayerPress={handlePlayerPress}
                 />
               </View>

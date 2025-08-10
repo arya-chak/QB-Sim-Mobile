@@ -206,10 +206,6 @@ const SVGFieldVisualizer = ({
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.formationTitle}>{fieldData.formation_name}</Text>
-          <Text style={styles.yardsText}>
-            3rd & {fieldData.yards_to_go} to go
-          </Text>
         </View>
       </View>
 
