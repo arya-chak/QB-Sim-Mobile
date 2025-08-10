@@ -48,13 +48,9 @@ const SVGFieldVisualizer = ({
       setLoading(true);
       setError(null);
 
-      console.log('🔍 SVG Debug - Calling API with:', { formationName, yardsToGo });
-
       // Get formation positions from API
       const data = await FieldVisualizationService.getFormationPositions(formationName, yardsToGo);
-    
-      console.log('🔍 SVG Debug - API Response:', data);
-    
+      
       setFieldData(data);
 
       // The API already returns players in the correct format!
@@ -63,13 +59,11 @@ const SVGFieldVisualizer = ({
         ...player,
         isBlitzing: player.id === 'MLB' // Example: Mark MLB as blitzing
       }));
-    
-      console.log('🔍 SVG Debug - Final Players:', playersWithBlitz);
-    
+      
       setPlayers(playersWithBlitz);
 
     } catch (err) {
-      console.error('🔍 SVG Debug - Error:', err);
+      console.error('Error loading field data:', err);
       setError('Failed to load field data: ' + err.message);
     } finally {
       setLoading(false);
@@ -101,16 +95,16 @@ const SVGFieldVisualizer = ({
   }
 
   if (error) {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.errorText}>{error}</Text>
-      <Text style={styles.errorText}>Formation: {formationName}</Text>
-      <Text style={styles.errorText}>Yards: {yardsToGo}</Text>
-      <TouchableOpacity style={styles.retryButton} onPress={loadFieldData}>
-        <Text style={styles.retryText}>Retry</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.errorText}>Formation: {formationName}</Text>
+        <Text style={styles.errorText}>Yards: {yardsToGo}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={loadFieldData}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   if (!fieldData || !players.length) {
@@ -121,14 +115,33 @@ const SVGFieldVisualizer = ({
     );
   }
 
+  // Calculate field positioning - LOS always at bottom
   const cellWidth = fieldWidth / (fieldData.field_dimensions?.width || 35);
   const cellHeight = fieldHeight / (fieldData.field_dimensions?.height || 15);
-  const losY = fieldData.line_of_scrimmage * cellHeight;
-  const firstDownY = fieldData.first_down_marker * cellHeight;
+  
+  // Position line of scrimmage near the bottom (90% down)
+  const losY = fieldHeight * 0.9;
+  
+  // Calculate first down marker position relative to LOS
+  const yardsDistance = fieldData.line_of_scrimmage - fieldData.first_down_marker;
+  const firstDownY = losY - (yardsDistance * (fieldHeight * 0.8) / 15); // Scale to use 80% of field height
+
+  // Transform player positions to new coordinate system
+  const transformedPlayers = players.map(player => {
+    // Convert API coordinates to field position relative to LOS
+    const yardsBehindLOS = fieldData.line_of_scrimmage - player.y;
+    const newY = losY - (yardsBehindLOS * (fieldHeight * 0.8) / 15);
+    const newX = (player.x / 35) * fieldWidth; // Scale X to field width
+    
+    return {
+      ...player,
+      transformedX: newX,
+      transformedY: newY
+    };
+  });
 
   const PlayerIcon = ({ player }) => {
     const colors = FieldUtils.getPlayerColors(player.type, player.isBlitzing);
-    const coords = FieldUtils.fieldToSVG(player.x, player.y, cellWidth, cellHeight);
     const isHovered = hoveredPlayer?.id === player.id;
     const radius = isHovered ? 14 : 12;
 
@@ -136,8 +149,8 @@ const SVGFieldVisualizer = ({
       <G key={player.id}>
         {/* Player circle */}
         <Circle
-          cx={coords.x}
-          cy={coords.y}
+          cx={player.transformedX}
+          cy={player.transformedY}
           r={radius}
           fill={colors.bg}
           stroke={colors.border}
@@ -148,10 +161,10 @@ const SVGFieldVisualizer = ({
         {/* Blitz arrow */}
         {showBlitz && player.isBlitzing && (
           <Line
-            x1={coords.x}
-            y1={coords.y - 20}
-            x2={coords.x}
-            y2={coords.y + 20}
+            x1={player.transformedX}
+            y1={player.transformedY - 20}
+            x2={player.transformedX}
+            y2={player.transformedY + 20}
             stroke="#dc2626"
             strokeWidth={3}
             markerEnd="url(#arrowhead)"
@@ -160,8 +173,8 @@ const SVGFieldVisualizer = ({
 
         {/* Position letter */}
         <SvgText
-          x={coords.x}
-          y={coords.y + 1}
+          x={player.transformedX}
+          y={player.transformedY + 1}
           textAnchor="middle"
           alignmentBaseline="middle"
           fontSize={isHovered ? "14" : "12"}
@@ -175,8 +188,8 @@ const SVGFieldVisualizer = ({
         {/* Hover ring */}
         {isHovered && (
           <Circle
-            cx={coords.x}
-            cy={coords.y}
+            cx={player.transformedX}
+            cy={player.transformedY}
             r={18}
             fill="none"
             stroke={colors.border}
@@ -195,7 +208,7 @@ const SVGFieldVisualizer = ({
         <View>
           <Text style={styles.formationTitle}>{fieldData.formation_name}</Text>
           <Text style={styles.yardsText}>
-            {FieldUtils.formatDownAndDistance(3, fieldData.yards_to_go)} to go
+            3rd & {fieldData.yards_to_go} to go
           </Text>
         </View>
       </View>
@@ -236,18 +249,19 @@ const SVGFieldVisualizer = ({
             />
           ))}
 
-          {/* Hash marks */}
-          {Array.from({ length: fieldData.field_dimensions?.height || 15 }, (_, row) => {
-            if (row === fieldData.line_of_scrimmage || row === fieldData.first_down_marker) return null;
+          {/* Hash marks - positioned relative to field */}
+          {Array.from({ length: 8 }, (_, index) => {
+            const y = (index / 7) * fieldHeight * 0.8;
+            if (Math.abs(y - (losY - fieldHeight * 0.9)) < 10) return null; // Skip hash marks near LOS
             return (
-              <G key={`hash-${row}`}>
-                <Circle cx={11 * cellWidth} cy={row * cellHeight} r={2} fill="#4ade80" opacity={0.6} />
-                <Circle cx={23 * cellWidth} cy={row * cellHeight} r={2} fill="#4ade80" opacity={0.6} />
+              <G key={`hash-${index}`}>
+                <Circle cx={fieldWidth * 0.3} cy={y} r={2} fill="#4ade80" opacity={0.6} />
+                <Circle cx={fieldWidth * 0.7} cy={y} r={2} fill="#4ade80" opacity={0.6} />
               </G>
             );
           })}
 
-          {/* Line of Scrimmage (Blue) */}
+          {/* Line of Scrimmage (Blue) - Always at bottom */}
           <Line
             x1={0}
             y1={losY}
@@ -258,27 +272,31 @@ const SVGFieldVisualizer = ({
           />
 
           {/* First Down Line (Yellow) */}
-          <Line
-            x1={0}
-            y1={firstDownY}
-            x2={fieldWidth}
-            y2={firstDownY}
-            stroke="#eab308"
-            strokeWidth={3}
-          />
+          {firstDownY >= 0 && firstDownY < fieldHeight && (
+            <Line
+              x1={0}
+              y1={firstDownY}
+              x2={fieldWidth}
+              y2={firstDownY}
+              stroke="#eab308"
+              strokeWidth={3}
+            />
+          )}
 
           {/* Players */}
-          {players.map((player) => (
+          {transformedPlayers.map((player) => (
             <PlayerIcon key={player.id} player={player} />
           ))}
 
           {/* Field labels */}
-          <SvgText x={10} y={losY - 10} fontSize="12" fill="#93c5fd" fontWeight="bold">
+          <SvgText x={10} y={losY - 15} fontSize="12" fill="#93c5fd" fontWeight="bold">
             Line of Scrimmage
           </SvgText>
-          <SvgText x={10} y={firstDownY - 10} fontSize="12" fill="#fde047" fontWeight="bold">
-            First Down ({fieldData.yards_to_go} yards)
-          </SvgText>
+          {firstDownY >= 0 && firstDownY < fieldHeight && (
+            <SvgText x={10} y={firstDownY - 15} fontSize="12" fill="#fde047" fontWeight="bold">
+              First Down ({fieldData.yards_to_go} yards)
+            </SvgText>
+          )}
         </Svg>
       </View>
 
@@ -354,7 +372,7 @@ const styles = StyleSheet.create({
     color: '#a7f3d0',
     fontSize: 12,
   },
-  llegend: {
+  legend: {
     marginTop: 8,
     backgroundColor: '#047857',
     borderColor: '#059669',
