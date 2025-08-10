@@ -485,12 +485,7 @@ export default function GameScreen({ navigation }) {
             {visibilitySettings.field_visual && defensiveScenario && (
               <View style={styles.fieldVisualBox}>
                 <Text style={styles.fieldVisualTitle}>🏈 Defensive Formation</Text>
-                <Text style={{color: 'red', fontSize: 12}}>
-      Debug: Formation = "{defensiveScenario.formation_data.formation_name}"
-    </Text>
-    <Text style={{color: 'red', fontSize: 12}}>
-      Debug: Coverage = "{defensiveScenario.coverage_name}"
-    </Text>
+                
                 <SVGFieldVisualizer 
                   formationName={defensiveScenario.formation_data.formation_name.replace(' Defense', '').toLowerCase()}
                   yardsToGo={minimumYards}

@@ -57,13 +57,16 @@ const SVGFieldVisualizer = ({
     
       setFieldData(data);
 
-      // Convert to player format with blitz info
-      const blitzers = FieldUtils.parseBlitzers({ blitzer: 'MLB' }); // Example blitz
-      const playerData = FieldUtils.convertAlignmentToPlayers(data.players, blitzers);
+      // The API already returns players in the correct format!
+      // Add blitzing info to existing players
+      const playersWithBlitz = data.players.map(player => ({
+        ...player,
+        isBlitzing: player.id === 'MLB' // Example: Mark MLB as blitzing
+      }));
     
-      console.log('🔍 SVG Debug - Converted Players:', playerData);
+      console.log('🔍 SVG Debug - Final Players:', playersWithBlitz);
     
-      setPlayers(playerData);
+      setPlayers(playersWithBlitz);
 
     } catch (err) {
       console.error('🔍 SVG Debug - Error:', err);
@@ -108,7 +111,7 @@ const SVGFieldVisualizer = ({
       </TouchableOpacity>
     </View>
   );
-}
+  }
 
   if (!fieldData || !players.length) {
     return (
@@ -307,15 +310,15 @@ const SVGFieldVisualizer = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#065f46',
-    padding: 16,
+    padding: 12,
     borderRadius: 12,
-    margin: 8,
+    margin: 4,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   formationTitle: {
     color: 'white',
@@ -328,7 +331,7 @@ const styles = StyleSheet.create({
   },
   fieldContainer: {
     backgroundColor: '#047857',
-    padding: 12,
+    padding: 8,
     borderRadius: 8,
     borderWidth: 2,
     borderColor: '#059669',
@@ -351,13 +354,13 @@ const styles = StyleSheet.create({
     color: '#a7f3d0',
     fontSize: 12,
   },
-  legend: {
-    marginTop: 12,
+  llegend: {
+    marginTop: 8,
     backgroundColor: '#047857',
     borderColor: '#059669',
     borderWidth: 1,
     borderRadius: 8,
-    padding: 12,
+    padding: 10,
   },
   legendTitle: {
     color: 'white',

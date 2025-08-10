@@ -1,6 +1,6 @@
 // Service for handling field visualization API calls
 
-const API_BASE_URL = 'http://192.168.0.33:8000/api';
+const API_BASE_URL = 'https://qb-pre-snap-simulator-production.up.railway.app/api';
 
 export class FieldVisualizationService {
   
