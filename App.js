@@ -9,6 +9,9 @@ import GameScreen from './screens/GameScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import OffensiveLibraryScreen from './screens/OffensiveLibraryScreen';
 import OffensiveFormationDetailScreen from './screens/OffensiveFormationDetailScreen';
+import DefensiveLibraryScreen from './screens/DefensiveLibraryScreen';
+import DefensiveFormationDetailScreen from './screens/DefensiveFormationDetailScreen';
+
 
 const Stack = createStackNavigator();
 
@@ -73,20 +76,16 @@ function LibraryScreen({ navigation }) {
           </Text>
           
           <TouchableOpacity 
-            style={[styles.libraryButton, styles.libraryButtonDisabled]}
-            disabled={true}
+            style={styles.libraryButton}
+            onPress={() => navigation.navigate('DefensiveLibrary')}
           >
             <View style={styles.libraryButtonContent}>
               <Text style={styles.libraryButtonEmoji}>🛡️</Text>
               <View style={styles.libraryButtonText}>
-                <Text style={[styles.libraryButtonTitle, styles.disabledText]}>
-                  Browse Defensive Formations
-                </Text>
-                <Text style={[styles.libraryButtonSubtitle, styles.disabledText]}>
-                  Coming soon!
-                </Text>
+                <Text style={styles.libraryButtonTitle}>Browse Defensive Formations</Text>
+                <Text style={styles.libraryButtonSubtitle}>7 formations • 252 schemes</Text>
               </View>
-              <Text style={[styles.libraryButtonArrow, styles.disabledText]}>→</Text>
+              <Text style={styles.libraryButtonArrow}>→</Text>
             </View>
           </TouchableOpacity>
 
@@ -145,6 +144,22 @@ export default function App() {
           component={OffensiveFormationDetailScreen}
           options={{
             title: 'Formation Details',
+            headerShown: false
+          }}
+        />
+        <Stack.Screen 
+          name="DefensiveLibrary" 
+          component={DefensiveLibraryScreen}
+          options={{
+            title: 'Defensive Library',
+            headerShown: false
+          }}
+        />
+        <Stack.Screen 
+          name="DefensiveFormationDetail" 
+          component={DefensiveFormationDetailScreen}
+          options={{
+            title: 'Defensive Formation Details',
             headerShown: false
           }}
         />
