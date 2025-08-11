@@ -39,11 +39,11 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Compact Header Bar */}
+      {/* Header Bar */}
       <View style={styles.headerBar}>
         <Text style={styles.titleLarge}>🏈 QB Pre-Snap Simulator</Text>
         <Text style={styles.subtitleLarge}>
-          {isLandscape ? 'Landscape Mode' : 'Portrait Mode'}
+          Master Pre-Snap Reads Like a Pro
         </Text>
       </View>
 
@@ -51,26 +51,30 @@ export default function HomeScreen({ navigation }) {
       <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.scrollContentContainer}>
         <View style={isLandscape ? styles.horizontalContent : styles.verticalContent}>
           
-          {/* Left Panel - Quote & Description */}
+          {/* Left Panel - Complete Tom Brady Quote & Description */}
           <View style={isLandscape ? styles.leftPanel : styles.fullPanel}>
-            <Text style={styles.quoteTextLarge}>
-              "I didn't snap the ball unless I knew what they were doing..."
-            </Text>
-            <Text style={styles.quoteAuthor}>— Tom Brady</Text>
+            
+            {/* Complete Tom Brady Quote */}
+            <View style={styles.quoteContainer}>
+              <Text style={styles.quoteTextLarge}>
+                "I could figure out what they were doing before they did it because that's how I learned the game... Unfortunately, most quarterbacks aren't playing the game like that anymore. They're fast when they get out of the pocket when they have to make decisions, but I didn't snap the ball unless I knew what they were doing... The one benefit you have as a quarterback before you snap the ball, you know where everybody on your team is running... If I look at the defense and I say 'None of my guys are going to be open based on this coverage', I don't need to snap the ball. I can run something different."
+              </Text>
+              <Text style={styles.quoteAuthor}>— Tom Brady</Text>
+            </View>
             
             <View style={styles.descriptionBox}>
-              <Text style={styles.descriptionTitle}>🎯 How to Play:</Text>
+              <Text style={styles.descriptionTitle}>🎯 Learn Like Brady:</Text>
               <Text style={styles.descriptionText}>
                 • Read the defensive formation{'\n'}
                 • Identify coverage and personnel{'\n'}
                 • Select the right play to attack{'\n'}
-                • Learn from your decisions
+                • Master pre-snap decision making
               </Text>
             </View>
 
             {stats && (
               <View style={styles.statsBox}>
-                <Text style={styles.statsTitle}>📊 Available Data:</Text>
+                <Text style={styles.statsTitle}>📊 Comprehensive Training:</Text>
                 <Text style={styles.statsText}>
                   • {stats.defensive_formations} Defensive Formations{'\n'}
                   • {stats.offensive_formations} Offensive Formations{'\n'}
@@ -83,38 +87,54 @@ export default function HomeScreen({ navigation }) {
 
           {/* Right Panel - Action Buttons */}
           <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
+            <Text style={styles.sectionTitleLarge}>🚀 Start Training</Text>
+            
             <TouchableOpacity 
               style={styles.primaryButtonLarge}
               onPress={() => navigation.navigate('Game')}
             >
-              <Text style={styles.primaryButtonTextLarge}>🎯 Start New Scenario</Text>
-              <Text style={styles.buttonSubtext}>Test your QB decision making</Text>
+              <Text style={styles.primaryButtonTextLarge}>🎮 Play Game</Text>
+              <Text style={styles.buttonSubtext}>Test your pre-snap reads</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.secondaryButtonLarge}
               onPress={() => navigation.navigate('Library')}
             >
-              <Text style={styles.secondaryButtonTextLarge}>📚 Formation Library</Text>
-              <Text style={styles.buttonSubtext}>Study all formations and plays</Text>
+              <Text style={styles.secondaryButtonTextLarge}>📚 Study Formations</Text>
+              <Text style={styles.buttonSubtext}>Learn defensive schemes</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.tertiaryButtonLarge}
               onPress={() => navigation.navigate('Settings')}
             >
-              <Text style={styles.tertiaryButtonTextLarge}>⚙️ Difficulty Settings</Text>
-              <Text style={styles.buttonSubtext}>Customize what you can see</Text>
+              <Text style={styles.tertiaryButtonTextLarge}>⚙️ Settings</Text>
+              <Text style={styles.buttonSubtext}>Customize difficulty</Text>
             </TouchableOpacity>
 
-            {isLandscape && (
-              <View style={styles.landscapeIndicator}>
-                <Text style={styles.landscapeText}>
-                  🏈 Perfect! This landscape view is optimized for tablet use.
-                </Text>
-              </View>
-            )}
+            {/* New Feature Highlight */}
+            <View style={styles.featureHighlight}>
+              <Text style={styles.featureTitle}>🆕 Formation Comparison</Text>
+              <Text style={styles.featureDescription}>
+                Analyze offensive vs defensive matchups
+              </Text>
+              <TouchableOpacity 
+                style={styles.featureButton}
+                onPress={() => navigation.navigate('FormationComparison')}
+              >
+                <Text style={styles.featureButtonText}>Try It Out →</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        </View>
+
+        {/* Footer for Educational Mission */}
+        <View style={styles.footer}>
+          <Text style={styles.footerTitle}>🎓 Built for Young Football Minds</Text>
+          <Text style={styles.footerText}>
+            Designed to help middle school, high school, and young quarterbacks develop the mental side of the game. Learn to read defenses like Tom Brady and make smarter decisions at the line of scrimmage.
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -126,36 +146,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  // Header Bar - Compact for tablets
   headerBar: {
     backgroundColor: '#1f4e79',
-    paddingVertical: 12,
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: '#374151',
   },
   titleLarge: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
+    textAlign: 'center',
   },
   subtitleLarge: {
     fontSize: 14,
-    color: '#e0e7ff',
-  },
-
-  // Horizontal Content Layout
-  horizontalContent: {
-    flexDirection: 'row',
-    gap: 20,
-    minHeight: '100%',
-  },
-  // Vertical Content Layout
-  verticalContent: {
-    minHeight: '100%',
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    marginTop: 4,
   },
   mainScrollView: {
     flex: 1,
@@ -163,6 +170,14 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     flexGrow: 1,
     padding: 20,
+  },
+  horizontalContent: {
+    flexDirection: 'row',
+    gap: 20,
+    minHeight: '100%',
+  },
+  verticalContent: {
+    minHeight: '100%',
   },
   leftPanel: {
     flex: 1,
@@ -186,7 +201,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  // Full panel for portrait mode
   fullPanel: {
     backgroundColor: 'white',
     borderRadius: 12,
@@ -199,68 +213,82 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  // Typography - Larger for tablets
+  // Enhanced Quote Styling
+  quoteContainer: {
+    backgroundColor: '#f0f9ff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    borderLeftWidth: 5,
+    borderLeftColor: '#1f4e79',
+  },
   quoteTextLarge: {
-    fontSize: 18,
+    fontSize: 16,
     fontStyle: 'italic',
-    color: '#6b7280',
-    lineHeight: 26,
+    color: '#2c3e50',
+    lineHeight: 24,
+    textAlign: 'center',
     marginBottom: 12,
   },
   quoteAuthor: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#1f4e79',
-    marginBottom: 24,
-    textAlign: 'right',
+    textAlign: 'center',
   },
 
-  // Description and Info Boxes
+  // Description and Stats
   descriptionBox: {
-    backgroundColor: '#f0f9ff',
-    borderLeftWidth: 4,
-    borderLeftColor: '#0ea5e9',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
     padding: 16,
-    borderRadius: 8,
     marginBottom: 20,
   },
   descriptionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#0369a1',
+    color: '#1f4e79',
     marginBottom: 8,
   },
   descriptionText: {
-    fontSize: 15,
-    color: '#0c4a6e',
-    lineHeight: 22,
+    fontSize: 14,
+    color: '#374151',
+    lineHeight: 20,
   },
   statsBox: {
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#ecfdf5',
+    borderRadius: 10,
+    padding: 16,
     borderLeftWidth: 4,
     borderLeftColor: '#10b981',
-    padding: 16,
-    borderRadius: 8,
   },
   statsTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#047857',
+    color: '#065f46',
     marginBottom: 8,
   },
   statsText: {
-    fontSize: 15,
-    color: '#065f46',
-    lineHeight: 22,
+    fontSize: 14,
+    color: '#047857',
+    lineHeight: 20,
   },
 
-  // Large Buttons for Tablets
+  // Enhanced Buttons
+  sectionTitleLarge: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f4e79',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
   primaryButtonLarge: {
-    backgroundColor: '#10b981',
-    paddingVertical: 18,
-    paddingHorizontal: 24,
+    backgroundColor: '#1f4e79',
     borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     marginBottom: 16,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -268,18 +296,17 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   primaryButtonTextLarge: {
-    color: 'white',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 4,
+    color: 'white',
   },
   secondaryButtonLarge: {
-    backgroundColor: '#6366f1',
-    paddingVertical: 18,
-    paddingHorizontal: 24,
+    backgroundColor: '#3b82f6',
     borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     marginBottom: 16,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -287,18 +314,17 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   secondaryButtonTextLarge: {
-    color: 'white',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 4,
+    color: 'white',
   },
   tertiaryButtonLarge: {
-    backgroundColor: '#f59e0b',
-    paddingVertical: 18,
-    paddingHorizontal: 24,
+    backgroundColor: '#6b7280',
     borderRadius: 12,
-    marginBottom: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    marginBottom: 20,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -306,32 +332,74 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   tertiaryButtonTextLarge: {
-    color: 'white',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 4,
+    color: 'white',
   },
   buttonSubtext: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 4,
     textAlign: 'center',
-    fontStyle: 'italic',
   },
 
-  // Landscape indicator
-  landscapeIndicator: {
-    backgroundColor: '#f0f9ff',
-    borderLeftWidth: 4,
-    borderLeftColor: '#0ea5e9',
+  // Feature Highlight
+  featureHighlight: {
+    backgroundColor: '#fef3c7',
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 8,
-    marginTop: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
+    marginTop: 10,
   },
-  landscapeText: {
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#92400e',
+    marginBottom: 6,
+  },
+  featureDescription: {
     fontSize: 14,
-    color: '#0369a1',
-    textAlign: 'center',
+    color: '#b45309',
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  featureButton: {
+    backgroundColor: '#f59e0b',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignSelf: 'flex-start',
+  },
+  featureButtonText: {
+    fontSize: 14,
     fontWeight: '600',
+    color: 'white',
+  },
+
+  // Footer
+  footer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  footerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f4e79',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });
