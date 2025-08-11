@@ -1,3 +1,4 @@
+// screens/DefensiveLibraryScreen.js
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -75,14 +76,6 @@ const DefensiveFormationCard = ({ formation, onPress, isLandscape }) => {
         <View style={styles.cardTitleContainer}>
           <Text style={styles.formationName}>{formation.name}</Text>
           <Text style={styles.personnelText}>{formation.personnel}</Text>
-        </View>
-        <View style={[
-          styles.complexityBadge,
-          { backgroundColor: getComplexityColor(formation.total_blitz_packages) }
-        ]}>
-          <Text style={styles.complexityText}>
-            {getComplexityLabel(formation.total_blitz_packages)}
-          </Text>
         </View>
       </View>
 

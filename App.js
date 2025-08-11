@@ -11,6 +11,7 @@ import OffensiveLibraryScreen from './screens/OffensiveLibraryScreen';
 import OffensiveFormationDetailScreen from './screens/OffensiveFormationDetailScreen';
 import DefensiveLibraryScreen from './screens/DefensiveLibraryScreen';
 import DefensiveFormationDetailScreen from './screens/DefensiveFormationDetailScreen';
+import FormationComparisonScreen from './screens/FormationComparisonScreen';
 
 
 const Stack = createStackNavigator();
@@ -90,20 +91,16 @@ function LibraryScreen({ navigation }) {
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[styles.libraryButton, styles.libraryButtonDisabled]}
-            disabled={true}
+            style={styles.libraryButton}
+            onPress={() => navigation.navigate('FormationComparison')}
           >
             <View style={styles.libraryButtonContent}>
               <Text style={styles.libraryButtonEmoji}>⚖️</Text>
               <View style={styles.libraryButtonText}>
-                <Text style={[styles.libraryButtonTitle, styles.disabledText]}>
-                  Formation Comparison
-                </Text>
-                <Text style={[styles.libraryButtonSubtitle, styles.disabledText]}>
-                  Coming soon!
-                </Text>
+                <Text style={styles.libraryButtonTitle}>Formation Comparison</Text>
+                <Text style={styles.libraryButtonSubtitle}>Analyze matchups & strategies</Text>
               </View>
-              <Text style={[styles.libraryButtonArrow, styles.disabledText]}>→</Text>
+              <Text style={styles.libraryButtonArrow}>→</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -160,6 +157,14 @@ export default function App() {
           component={DefensiveFormationDetailScreen}
           options={{
             title: 'Defensive Formation Details',
+            headerShown: false
+          }}
+        />
+        <Stack.Screen 
+          name="FormationComparison" 
+          component={FormationComparisonScreen}
+          options={{
+            title: 'Formation Comparison',
             headerShown: false
           }}
         />
