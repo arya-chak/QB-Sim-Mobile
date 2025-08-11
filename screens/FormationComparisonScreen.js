@@ -30,6 +30,33 @@ function useOrientation() {
   return orientation;
 }
 
+// Helper function to get formation emoji
+const getFormationEmoji = (formationName, type) => {
+  if (type === 'offensive') {
+    const emojiMap = {
+      'i-form': '🏃',
+      'singleback': '⚔️',
+      'shotgun': '⚡',
+      'trips': '📐',
+      'bunch': '🎯',
+      'empty': '🌊',
+      'goal line': '💪'
+    };
+    return emojiMap[formationName?.toLowerCase()] || '🏈';
+  } else {
+    const emojiMap = {
+      '4-3': '🛡️',
+      '3-4': '⚔️',
+      '4-4': '⚖️',
+      '5-2': '💪',
+      'nickel': '🎯',
+      'dime': '💎',
+      '46': '🔥'
+    };
+    return emojiMap[formationName?.toLowerCase()] || '🛡️';
+  }
+};
+
 // Formation Selection Component
 const FormationSelector = ({ 
   type, 
@@ -120,36 +147,10 @@ const FormationSelector = ({
 
 // Formation Details Component
 const FormationDetails = ({ formation, type, isExpanded, onToggle }) => {
-  const getFormationEmoji = (formationName, type) => {
-    if (type === 'offensive') {
-      const emojiMap = {
-        'I-Formation': '🏃',
-        'Singleback': '⚔️',
-        'Shotgun': '⚡',
-        'Trips': '📐',
-        'Bunch': '🎯',
-        'Empty': '🌊',
-        'Goal Line': '💪'
-      };
-      return emojiMap[formationName] || '🏈';
-    } else {
-      const emojiMap = {
-        '4-3 Defense': '🛡️',
-        '3-4 Defense': '⚔️',
-        '5-2 Defense': '🏰',
-        '4-4 Defense': '⚖️',
-        '46 Defense': '💥',
-        'Nickel Defense': '🔺',
-        'Dime Defense': '💎'
-      };
-      return emojiMap[formationName] || '🛡️';
-    }
-  };
-
   if (!formation) {
     return (
       <View style={styles.formationDetailsContainer}>
-        <Text style={styles.noSelectionText}>
+        <Text style={styles.emptyStateText}>
           {type === 'offensive' ? 
             '🏈 Select an offensive formation to see details' : 
             '🛡️ Select a defensive formation to see details'
@@ -167,8 +168,10 @@ const FormationDetails = ({ formation, type, isExpanded, onToggle }) => {
           {getFormationEmoji(formation.name, type)}
         </Text>
         <View style={styles.formationDetailsTitle}>
-          <Text style={styles.formationDetailsName}>{formation.name}</Text>
-          <Text style={styles.formationDetailsPersonnel}>
+          <Text style={styles.formationDetailsName} numberOfLines={2}>
+            {formation.name}
+          </Text>
+          <Text style={styles.formationDetailsPersonnel} numberOfLines={1}>
             {formation.personnel}
           </Text>
         </View>
@@ -180,7 +183,149 @@ const FormationDetails = ({ formation, type, isExpanded, onToggle }) => {
       </View>
 
       {/* Formation Description */}
-      <Text style={styles.formationDescription}>{formation.description}</Text>
+      <View style={styles.formationDescriptionContainer}>
+        <Text 
+          style={styles.formationDescription} 
+          numberOfLines={isExpanded ? undefined : 3}
+        >
+          {formation.description}
+        </Text>
+      </View>
+
+      {/* Stats */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statsGrid}>
+          {type === 'offensive' ? (
+            <>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{formation.total_plays || 0}</Text>
+                <Text style={styles.statLabel}>Total Plays</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={[styles.statNumber, { color: '#3b82f6' }]}>
+                  {formation.total_passing_plays || 0}
+                </Text>
+                <Text style={styles.statLabel}>Passing</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={[styles.statNumber, { color: '#10b981' }]}>
+                  {formation.total_running_plays || 0}
+                </Text>
+                <Text style={styles.statLabel}>Running</Text>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{formation.total_coverages || 0}</Text>
+                <Text style={styles.statLabel}>Coverages</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={[styles.statNumber, { color: '#ef4444' }]}>
+                  {formation.total_blitz_packages || 0}
+                </Text>
+                <Text style={styles.statLabel}>Blitz Schemes</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={[styles.statNumber, { color: '#8b5cf6' }]}>
+                  {formation.coverages?.filter(c => c.coverage_type === 'zone').length || 0}
+                </Text>
+                <Text style={styles.statLabel}>Zone Coverages</Text>
+              </View>
+            </>
+          )}
+        </View>
+      </View>
+
+      {/* Always show first few key strengths and weaknesses */}
+      {!isExpanded && ((type === 'offensive' && formation.formation_strengths) || 
+        (type === 'defensive' && formation.base_strengths)) && (
+        <View style={styles.quickStrengthsContainer}>
+          <Text style={styles.quickStrengthsTitle}>💪 Key Strengths</Text>
+          {(type === 'offensive' ? 
+            formation.formation_strengths?.slice(0, 4) : 
+            formation.base_strengths?.slice(0, 4)
+          )?.map((strength, index) => (
+            <Text key={index} style={styles.quickStrengthsItem}>
+              • {strength.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </Text>
+          ))}
+        </View>
+      )}
+
+      {!isExpanded && ((type === 'offensive' && formation.formation_weaknesses) || 
+        (type === 'defensive' && formation.base_weaknesses)) && (
+        <View style={styles.quickWeaknessesContainer}>
+          <Text style={styles.quickWeaknessesTitle}>⚠️ Key Weaknesses</Text>
+          {(type === 'offensive' ? 
+            formation.formation_weaknesses?.slice(0, 4) : 
+            formation.base_weaknesses?.slice(0, 4)
+          )?.map((weakness, index) => (
+            <Text key={index} style={styles.quickWeaknessesItem}>
+              • {weakness.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </Text>
+          ))}
+        </View>
+      )}
+
+      {/* Coverage Packages for Defensive Formations - SHOW ALL COVERAGES */}
+      {type === 'defensive' && formation.coverages && formation.coverages.length > 0 && (
+        <View style={styles.coveragePackagesContainer}>
+          <Text style={styles.coveragePackagesTitle}>
+            🛡️ Coverage Packages ({formation.coverages.length})
+          </Text>
+          <Text style={styles.coveragePackagesSubtitle}>
+            All available coverage schemes for this formation
+          </Text>
+          
+          <View style={styles.coveragesList}>
+            {/* Show ALL coverages, not just first 3 */}
+            {formation.coverages.map((coverage, index) => (
+              <View key={coverage.key} style={styles.coverageItem}>
+                <View style={styles.coverageHeader}>
+                  <View style={styles.coverageMainInfo}>
+                    <Text style={styles.coverageName}>
+                      {coverage.name}
+                    </Text>
+                    <Text style={styles.coverageType}>
+                      {coverage.coverage_type?.toUpperCase()} COVERAGE
+                    </Text>
+                  </View>
+                  <View style={styles.coverageStats}>
+                    <Text style={styles.blitzCount}>
+                      {coverage.blitz_packages?.length || 0}
+                    </Text>
+                    <Text style={styles.blitzLabel}>blitz packages</Text>
+                  </View>
+                </View>
+                
+                {/* Show brief description if available */}
+                {coverage.description && (
+                  <Text style={styles.coverageDescription} numberOfLines={2}>
+                    {coverage.description}
+                  </Text>
+                )}
+                
+                {/* Show optimal situations as tags */}
+                {coverage.optimal_situations && coverage.optimal_situations.length > 0 && (
+                  <View style={styles.situationTagsContainer}>
+                    <Text style={styles.situationTagsTitle}>Best for:</Text>
+                    <View style={styles.situationTags}>
+                      {coverage.optimal_situations.slice(0, 3).map((situation, tagIndex) => (
+                        <View key={tagIndex} style={styles.situationTag}>
+                          <Text style={styles.situationTagText}>
+                            {situation.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
       {/* Expanded Details */}
       {isExpanded && (
@@ -189,15 +334,17 @@ const FormationDetails = ({ formation, type, isExpanded, onToggle }) => {
           {((type === 'offensive' && formation.formation_strengths) || 
             (type === 'defensive' && formation.base_strengths)) && (
             <View style={styles.detailSection}>
-              <Text style={styles.detailSectionTitle}>💪 Key Strengths</Text>
-              {(type === 'offensive' ? 
-                formation.formation_strengths?.slice(0, 4) : 
-                formation.base_strengths?.slice(0, 4)
-              )?.map((strength, index) => (
-                <Text key={index} style={styles.detailItem}>
-                  • {strength.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </Text>
-              ))}
+              <Text style={styles.detailSectionTitle}>💪 All Formation Strengths</Text>
+              <View style={styles.detailItemsContainer}>
+                {(type === 'offensive' ? 
+                  formation.formation_strengths : 
+                  formation.base_strengths
+                )?.map((strength, index) => (
+                  <Text key={index} style={styles.detailItem}>
+                    • {strength.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </Text>
+                ))}
+              </View>
             </View>
           )}
 
@@ -205,26 +352,28 @@ const FormationDetails = ({ formation, type, isExpanded, onToggle }) => {
           {((type === 'offensive' && formation.formation_weaknesses) || 
             (type === 'defensive' && formation.base_weaknesses)) && (
             <View style={styles.detailSection}>
-              <Text style={styles.detailSectionTitle}>⚠️ Key Weaknesses</Text>
-              {(type === 'offensive' ? 
-                formation.formation_weaknesses?.slice(0, 4) : 
-                formation.base_weaknesses?.slice(0, 4)
-              )?.map((weakness, index) => (
-                <Text key={index} style={styles.detailItem}>
-                  • {weakness.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </Text>
-              ))}
+              <Text style={styles.detailSectionTitle}>⚠️ All Formation Weaknesses</Text>
+              <View style={styles.detailItemsContainer}>
+                {(type === 'offensive' ? 
+                  formation.formation_weaknesses : 
+                  formation.base_weaknesses
+                )?.map((weakness, index) => (
+                  <Text key={index} style={styles.detailItem}>
+                    • {weakness.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </Text>
+                ))}
+              </View>
             </View>
           )}
 
-          {/* Optimal Situations */}
-          {formation.optimal_situations && (
+          {/* Optimal Situations for Defensive Formations */}
+          {type === 'defensive' && formation.optimal_situations && formation.optimal_situations.length > 0 && (
             <View style={styles.detailSection}>
               <Text style={styles.detailSectionTitle}>🎯 Optimal Situations</Text>
-              <View style={styles.situationTags}>
-                {formation.optimal_situations.slice(0, 6).map((situation, index) => (
-                  <View key={index} style={styles.situationTag}>
-                    <Text style={styles.situationTagText}>
+              <View style={styles.optimalSituationsGrid}>
+                {formation.optimal_situations.map((situation, index) => (
+                  <View key={index} style={styles.optimalSituationTag}>
+                    <Text style={styles.optimalSituationText}>
                       {situation.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </Text>
                   </View>
@@ -232,49 +381,6 @@ const FormationDetails = ({ formation, type, isExpanded, onToggle }) => {
               </View>
             </View>
           )}
-
-          {/* Additional Stats */}
-          <View style={styles.statsSection}>
-            {type === 'offensive' ? (
-              <>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{formation.total_plays || 0}</Text>
-                  <Text style={styles.statLabel}>Total Plays</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statNumber, { color: '#3b82f6' }]}>
-                    {formation.passing_plays?.length || 0}
-                  </Text>
-                  <Text style={styles.statLabel}>Passing</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statNumber, { color: '#10b981' }]}>
-                    {formation.running_plays?.length || 0}
-                  </Text>
-                  <Text style={styles.statLabel}>Running</Text>
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{formation.total_coverages || 0}</Text>
-                  <Text style={styles.statLabel}>Coverages</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statNumber, { color: '#ef4444' }]}>
-                    {formation.total_blitz_packages || 0}
-                  </Text>
-                  <Text style={styles.statLabel}>Blitz Schemes</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statNumber, { color: '#8b5cf6' }]}>
-                    {formation.coverages?.filter(c => c.coverage_type === 'zone').length || 0}
-                  </Text>
-                  <Text style={styles.statLabel}>Zone Coverages</Text>
-                </View>
-              </>
-            )}
-          </View>
         </View>
       )}
     </View>
@@ -463,19 +569,50 @@ export default function FormationComparisonScreen({ navigation }) {
 
   const loadOffensiveDetails = async (formationKey) => {
     try {
-      const details = await ApiService.getOffensiveFormationDetails(formationKey);
-      setOffensiveDetails(details);
+        const data = await ApiService.getOffensiveFormationDetails(formationKey);
+    
+        // Add total_plays calculation for consistency with defensive formations
+        const total_plays = (data.passing_plays?.length || 0) + (data.running_plays?.length || 0);
+    
+        const formationWithTotals = {
+            ...data,
+            total_plays: total_plays,
+            total_passing_plays: data.passing_plays?.length || 0,
+            total_running_plays: data.running_plays?.length || 0
+        };
+    
+        setOffensiveDetails(formationWithTotals);
     } catch (error) {
-      console.error('Error loading offensive details:', error);
+        console.error('Error loading offensive details:', error);
+        Alert.alert(
+        'Error',
+        'Failed to load offensive formation details. Please try again.'
+        );
     }
   };
 
   const loadDefensiveDetails = async (formationKey) => {
     try {
-      const details = await ApiService.getDefensiveFormationDetails(formationKey);
-      setDefensiveDetails(details);
+        const data = await ApiService.getDefensiveFormationDetails(formationKey);
+    
+        // Calculate total_blitz_packages correctly from the detailed data
+        const total_blitz_packages = data.coverages?.reduce((sum, coverage) => {
+        return sum + (coverage.blitz_packages?.length || 0);
+        }, 0) || 0;
+    
+        // Add the calculated total to the defensive details
+        const formationWithTotals = {
+            ...data,
+            total_blitz_packages: total_blitz_packages
+        };
+    
+        setDefensiveDetails(formationWithTotals);
     } catch (error) {
-      console.error('Error loading defensive details:', error);
+        console.error('Error loading defensive details:', error);
+        Alert.alert(
+        'Error',
+        'Failed to load defensive formation details. Please try again.'
+        );
     }
   };
 
@@ -738,11 +875,13 @@ const styles = StyleSheet.create({
 
   // Formation Details
   detailsContainer: {
-    marginBottom: 20,
+    marginTop: 20,
   },
   detailsContainerLandscape: {
     flexDirection: 'row',
     gap: 20,
+    // Ensure both sides get equal space
+    flex: 1,
   },
   formationDetailsContainer: {
     backgroundColor: 'white',
@@ -754,6 +893,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    maxWidth: '100%',
+    flex: 1,
+    minHeight: 0,
+  },
+  formationDescriptionContainer: {
+    marginBottom: 12,
+    flexShrink: 1,
   },
   noSelectionText: {
     textAlign: 'center',
@@ -773,16 +919,23 @@ const styles = StyleSheet.create({
   },
   formationDetailsTitle: {
     flex: 1,
+    // Prevent title from overflowing
+    minWidth: 0,
   },
   formationDetailsName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1f4e79',
+    // Allow text to wrap if needed
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
   formationDetailsPersonnel: {
     fontSize: 12,
     color: '#6b7280',
     marginTop: 2,
+    // Prevent personnel text from overflowing
+    flexShrink: 1,
   },
   expandButton: {
     padding: 8,
@@ -795,43 +948,213 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     lineHeight: 20,
+    flexWrap: 'wrap',
+    flexShrink: 1,
+  },
+  quickStrengthsContainer: {
+    backgroundColor: '#f0f9ff',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#0ea5e9',
+  },
+  quickStrengthsTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#0ea5e9',
+    marginBottom: 6,
+  },
+  quickStrengthsItem: {
+    fontSize: 11,
+    color: '#0369a1',
+    lineHeight: 16,
+    marginBottom: 2,
+  },
+  quickWeaknessesContainer: {
+    backgroundColor: '#fef3f2',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#ef4444',
+  },
+  quickWeaknessesTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#ef4444',
+    marginBottom: 6,
+  },
+  quickWeaknessesItem: {
+    fontSize: 11,
+    color: '#dc2626',
+    lineHeight: 16,
+    marginBottom: 2,
+  },
+  statsContainer: {
     marginBottom: 12,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   expandedDetails: {
     borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
-    paddingTop: 12,
+    paddingTop: 16,
+    marginTop: 16,
   },
   detailSection: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   detailSectionTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#1f4e79',
-    marginBottom: 6,
+    marginBottom: 8,
+  },
+  detailItemsContainer: {
+    flexDirection: 'column',
+    gap: 4,
   },
   detailItem: {
     fontSize: 12,
     color: '#6b7280',
     lineHeight: 18,
-    marginBottom: 2,
+    flexWrap: 'wrap',
   },
-  situationTags: {
+  optimalSituationsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginTop: 6,
   },
-  situationTag: {
-    backgroundColor: '#f3f4f6',
+  optimalSituationTag: {
+    backgroundColor: '#fef3c7',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
+  optimalSituationText: {
+    fontSize: 11,
+    color: '#92400e',
+    fontWeight: '500',
+  },
+  coveragePackagesContainer: {
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  coveragePackagesTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1f4e79',
+    marginBottom: 4,
+  },
+  coveragePackagesSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 12,
+  },
+  coveragesList: {
+    gap: 10,
+  },
+  coverageItem: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    padding: 14,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1f4e79',
+  },
+  coverageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  coverageMainInfo: {
+    flex: 1,
+  },
+  coverageName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1f4e79',
+    marginBottom: 3,
+  },
+  coverageType: {
+    fontSize: 11,
+    color: '#6b7280',
+    fontWeight: '600',
+    backgroundColor: '#e5e7eb',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+  },
+  coverageStats: {
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  blitzCount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ef4444',
+    textAlign: 'center',
+  },
+  blitzLabel: {
+    fontSize: 10,
+    color: '#9ca3af',
+    textAlign: 'center',
+  },
+  coverageDescription: {
+    fontSize: 12,
+    color: '#6b7280',
+    lineHeight: 16,
+    marginBottom: 8,
+    fontStyle: 'italic',
+  },
+  moreText: {
+    fontSize: 12,
+    color: '#9ca3af',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#9ca3af',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    padding: 40,
+  },
+  situationTagsContainer: {
+    marginTop: 6,
+  },
+  situationTagsTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 4,
+  },
+  situationTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  situationTag: {
+    backgroundColor: '#ecfdf5',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
   situationTagText: {
     fontSize: 10,
-    color: '#4b5563',
+    color: '#059669',
     fontWeight: '500',
   },
   statsSection: {
@@ -844,6 +1167,8 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: 'center',
+    flex: 1,
+    minWidth: 60,
   },
   statNumber: {
     fontSize: 18,
@@ -853,9 +1178,9 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     color: '#6b7280',
+    textAlign: 'center',
     marginTop: 2,
   },
-
   // Matchup Analysis
   analysisContainer: {
     backgroundColor: 'white',
