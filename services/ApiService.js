@@ -115,6 +115,126 @@ class ApiService {
       throw error;
     }
   }
+
+  /**
+   * Get list of all offensive formations for library browser
+   */
+  static async getLibraryOffensiveFormations() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/library/offensive-formations`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching library offensive formations:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get detailed information about a specific offensive formation
+   * @param {string} formationKey - The formation key (e.g., "i-form", "shotgun")
+   */
+  static async getOffensiveFormationDetails(formationKey) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/library/offensive-formations/${formationKey}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching offensive formation details:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get list of all defensive formations for library browser
+   */
+  static async getLibraryDefensiveFormations() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/library/defensive-formations`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching library defensive formations:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get detailed information about a specific defensive formation
+   * @param {string} formationKey - The formation key (e.g., "4-3", "nickel")
+   */
+  static async getDefensiveFormationDetails(formationKey) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/library/defensive-formations/${formationKey}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching defensive formation details:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search across all formations, plays, and coverage packages
+   * @param {string} query - Search query
+   * @param {string} formationType - Optional: "offensive" or "defensive" to filter results
+   * @param {string} category - Optional: "formation", "play", "coverage" to filter results
+   */
+  static async searchLibrary(query, formationType = null, category = null) {
+    try {
+      let url = `${API_BASE_URL}/library/search?query=${encodeURIComponent(query)}`;
+      
+      if (formationType) {
+        url += `&formation_type=${formationType}`;
+      }
+      
+      if (category) {
+        url += `&category=${category}`;
+      }
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error searching library:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get formation field visualization data
+   * @param {string} formationName - Formation name for SVG visualization
+   * @param {number} yardsToGo - Yards to go for field setup
+   */
+  static async getFormationPositions(formationName, yardsToGo = 10) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/defensive-formation/${formationName}/positions?yards_to_go=${yardsToGo}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching formation positions:', error);
+      throw error;
+    }
+  }
+
 }
 
 export default ApiService;

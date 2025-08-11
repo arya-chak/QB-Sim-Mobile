@@ -7,6 +7,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from './screens/HomeScreen';
 import GameScreen from './screens/GameScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import OffensiveLibraryScreen from './screens/OffensiveLibraryScreen';
+import OffensiveFormationDetailScreen from './screens/OffensiveFormationDetailScreen';
 
 const Stack = createStackNavigator();
 
@@ -45,17 +47,74 @@ function LibraryScreen({ navigation }) {
       <View style={isLandscape ? styles.horizontalContent : styles.verticalContent}>
         <View style={isLandscape ? styles.leftPanel : styles.fullPanel}>
           <Text style={styles.sectionTitleLarge}>🏈 Offensive Formations</Text>
-          <Text style={styles.placeholderText}>
-            Complete formation library coming soon! Will include all formations, plays, strengths, weaknesses, and situational usage.
+          <Text style={styles.descriptionText}>
+            Explore all offensive formations with detailed play breakdowns, routes, and tactical analysis.
           </Text>
+          
+          <TouchableOpacity 
+            style={styles.libraryButton}
+            onPress={() => navigation.navigate('OffensiveLibrary')}
+          >
+            <View style={styles.libraryButtonContent}>
+              <Text style={styles.libraryButtonEmoji}>🏈</Text>
+              <View style={styles.libraryButtonText}>
+                <Text style={styles.libraryButtonTitle}>Browse Offensive Formations</Text>
+                <Text style={styles.libraryButtonSubtitle}>7 formations • 70 plays</Text>
+              </View>
+              <Text style={styles.libraryButtonArrow}>→</Text>
+            </View>
+          </TouchableOpacity>
         </View>
         
         <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
           <Text style={styles.sectionTitleLarge}>🛡️ Defensive Formations</Text>
-          <Text style={styles.placeholderText}>
-            Defensive formation library will show coverage packages, blitz schemes, and how to attack each defensive look.
+          <Text style={styles.descriptionText}>
+            Browse defensive formations, coverage packages, and blitz schemes.
           </Text>
+          
+          <TouchableOpacity 
+            style={[styles.libraryButton, styles.libraryButtonDisabled]}
+            disabled={true}
+          >
+            <View style={styles.libraryButtonContent}>
+              <Text style={styles.libraryButtonEmoji}>🛡️</Text>
+              <View style={styles.libraryButtonText}>
+                <Text style={[styles.libraryButtonTitle, styles.disabledText]}>
+                  Browse Defensive Formations
+                </Text>
+                <Text style={[styles.libraryButtonSubtitle, styles.disabledText]}>
+                  Coming soon!
+                </Text>
+              </View>
+              <Text style={[styles.libraryButtonArrow, styles.disabledText]}>→</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.libraryButton, styles.libraryButtonDisabled]}
+            disabled={true}
+          >
+            <View style={styles.libraryButtonContent}>
+              <Text style={styles.libraryButtonEmoji}>⚖️</Text>
+              <View style={styles.libraryButtonText}>
+                <Text style={[styles.libraryButtonTitle, styles.disabledText]}>
+                  Formation Comparison
+                </Text>
+                <Text style={[styles.libraryButtonSubtitle, styles.disabledText]}>
+                  Coming soon!
+                </Text>
+              </View>
+              <Text style={[styles.libraryButtonArrow, styles.disabledText]}>→</Text>
+            </View>
+          </TouchableOpacity>
         </View>
+      </View>
+
+      {/* Footer */}
+      <View style={styles.libraryFooter}>
+        <Text style={styles.libraryFooterText}>
+          Study formations and plays to improve your pre-snap reads and decision making
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -73,6 +132,22 @@ export default function App() {
         <Stack.Screen name="Game" component={GameScreen} />
         <Stack.Screen name="Library" component={LibraryScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen 
+          name="OffensiveLibrary" 
+          component={OffensiveLibraryScreen}
+          options={{
+            title: 'Offensive Library',
+            headerShown: false
+          }}
+        />
+        <Stack.Screen 
+          name="OffensiveFormationDetail" 
+          component={OffensiveFormationDetailScreen}
+          options={{
+            title: 'Formation Details',
+            headerShown: false
+          }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -162,11 +237,69 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#1f4e79',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  placeholderText: {
-    fontSize: 16,
+  descriptionText: {
+    fontSize: 15,
     color: '#6b7280',
-    lineHeight: 24,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+
+  // Library Buttons
+  libraryButton: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+  },
+  libraryButtonDisabled: {
+    backgroundColor: '#f3f4f6',
+    borderColor: '#e5e7eb',
+  },
+  libraryButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  libraryButtonEmoji: {
+    fontSize: 32,
+    marginRight: 16,
+  },
+  libraryButtonText: {
+    flex: 1,
+  },
+  libraryButtonTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f4e79',
+  },
+  libraryButtonSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 2,
+  },
+  libraryButtonArrow: {
+    fontSize: 20,
+    color: '#3b82f6',
+    fontWeight: 'bold',
+  },
+  disabledText: {
+    color: '#9ca3af',
+  },
+
+  // Footer
+  libraryFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    backgroundColor: 'white',
+  },
+  libraryFooterText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
