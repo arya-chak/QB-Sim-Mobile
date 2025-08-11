@@ -3,13 +3,19 @@
 PreSnap Prep is the ultimate React Native mobile application for developing elite football intelligence and pre-snap recognition skills. Train like the pros by analyzing defensive schemes, understanding offensive concepts, and making tactical decisions that elevate your entire football IQ.
 
 🎯 What is PreSnap Prep?
+
 PreSnap Prep transforms your mobile device into a comprehensive football intelligence training simulator. This app challenges users to identify defensive formations, read coverage schemes, and understand strategic play calling - skills that benefit every position on the field. Whether you're a quarterback reading the defense, a wide receiver recognizing coverage, or a lineman looking to stop a blitz, PreSnap Prep provides the tools to develop elite-level tactical awareness.
 
 ✨ Key Features
+
 🎮 Interactive Training Modes
+
   🎓 Learner Mode: Perfect for beginners with simplified scenarios and strategic fundamentals
+  
   ⚡ Pro Mode: Advanced tactical scenarios with complete playbook access
+  
   🔧 Custom Difficulty: Configure exactly what information you can see pre-snap
+  
 📚 Comprehensive Football Library
   7 Offensive Formations: Master every concept from I-Formation to Empty sets
   7 Defensive Schemes: Study everything from 3-4 base to specialized packages
