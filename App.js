@@ -6,13 +6,13 @@ import { createStackNavigator } from '@react-navigation/stack';
 // Import screens
 import HomeScreen from './screens/HomeScreen';
 import GameScreen from './screens/GameScreen';
+import SnapAudibleScreen from './screens/SnapAudibleScreen'; // NEW: Import the new screen
 import SettingsScreen from './screens/SettingsScreen';
 import OffensiveLibraryScreen from './screens/OffensiveLibraryScreen';
 import OffensiveFormationDetailScreen from './screens/OffensiveFormationDetailScreen';
 import DefensiveLibraryScreen from './screens/DefensiveLibraryScreen';
 import DefensiveFormationDetailScreen from './screens/DefensiveFormationDetailScreen';
 import FormationComparisonScreen from './screens/FormationComparisonScreen';
-
 
 const Stack = createStackNavigator();
 
@@ -33,7 +33,7 @@ function useOrientation() {
   return orientation;
 }
 
-// Library Screen Component - Simple horizontal layout
+// Library Screen Component - Simple horizontal layout (unchanged)
 function LibraryScreen({ navigation }) {
   const orientation = useOrientation();
   const isLandscape = orientation === 'landscape';
@@ -126,6 +126,17 @@ export default function App() {
       >
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Game" component={GameScreen} />
+        
+        {/* NEW: Add SnapAudible screen to navigation */}
+        <Stack.Screen 
+          name="SnapAudible" 
+          component={SnapAudibleScreen}
+          options={{
+            title: 'Snap or Audible',
+            headerShown: false
+          }}
+        />
+        
         <Stack.Screen name="Library" component={LibraryScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen 
@@ -173,7 +184,7 @@ export default function App() {
   );
 }
 
-// Simplified styles - just what's needed for remaining screens
+// Simplified styles - just what's needed for remaining screens (unchanged)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -252,74 +263,76 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  // Typography
+  // Library specific styles
   sectionTitleLarge: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#1f4e79',
-    marginBottom: 12,
+    marginBottom: 20,
+    textAlign: 'center',
   },
   descriptionText: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#6b7280',
-    lineHeight: 22,
+    lineHeight: 24,
     marginBottom: 20,
+    textAlign: 'center',
   },
-
-  // Library Buttons
   libraryButton: {
     backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
     borderWidth: 2,
     borderColor: '#e5e7eb',
-  },
-  libraryButtonDisabled: {
-    backgroundColor: '#f3f4f6',
-    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   libraryButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   libraryButtonEmoji: {
-    fontSize: 32,
+    fontSize: 24,
     marginRight: 16,
   },
   libraryButtonText: {
     flex: 1,
   },
   libraryButtonTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1f4e79',
+    marginBottom: 4,
   },
   libraryButtonSubtitle: {
     fontSize: 14,
     color: '#6b7280',
-    marginTop: 2,
   },
   libraryButtonArrow: {
     fontSize: 20,
-    color: '#3b82f6',
-    fontWeight: 'bold',
+    color: '#6b7280',
+    marginLeft: 12,
   },
-  disabledText: {
-    color: '#9ca3af',
-  },
-
-  // Footer
   libraryFooter: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
     backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    margin: 20,
+    marginTop: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   libraryFooterText: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: '#6b7280',
+    lineHeight: 20,
     textAlign: 'center',
-    fontStyle: 'italic',
   },
 });

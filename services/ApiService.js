@@ -1,6 +1,7 @@
 // ApiService.js - Handles all API calls to your Python backend
 
-const API_BASE_URL = 'https://qb-pre-snap-simulator-production.up.railway.app/api';
+// const API_BASE_URL = 'https://qb-pre-snap-simulator-production.up.railway.app/api';
+const API_BASE_URL = 'http://192.168.1.181:8000/api';
 
 class ApiService {
   

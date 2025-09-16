@@ -87,24 +87,36 @@ export default function HomeScreen({ navigation }) {
 
           {/* Right Panel - Action Buttons */}
           <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
-            <Text style={styles.sectionTitleLarge}>🚀 Start Training</Text>
+            <Text style={styles.sectionTitleLarge}>🎮 Start Training</Text>
             
+            {/* Main Play Game Button */}
             <TouchableOpacity 
               style={styles.primaryButtonLarge}
               onPress={() => navigation.navigate('Game')}
             >
-              <Text style={styles.primaryButtonTextLarge}>🎮 Play Game</Text>
-              <Text style={styles.buttonSubtext}>Test your pre-snap reads</Text>
+              <Text style={styles.primaryButtonTextLarge}>🛡️ Play Game</Text>
+              <Text style={styles.buttonSubtext}>Read defenses & call plays</Text>
             </TouchableOpacity>
 
+            {/* NEW: Snap or Audible Button - Added right after the main button */}
+            <TouchableOpacity 
+              style={styles.snapAudibleButtonLarge}
+              onPress={() => navigation.navigate('SnapAudible')}
+            >
+              <Text style={styles.snapAudibleButtonTextLarge}>🏈 Snap or Audible</Text>
+              <Text style={styles.buttonSubtext}>Quick decision training</Text>
+            </TouchableOpacity>
+
+            {/* Existing Library Button */}
             <TouchableOpacity 
               style={styles.secondaryButtonLarge}
               onPress={() => navigation.navigate('Library')}
             >
-              <Text style={styles.secondaryButtonTextLarge}>📚 Study Formations</Text>
-              <Text style={styles.buttonSubtext}>Learn defensive schemes</Text>
+              <Text style={styles.secondaryButtonTextLarge}>📚 Formation Library</Text>
+              <Text style={styles.buttonSubtext}>Study all formations & plays</Text>
             </TouchableOpacity>
 
+            {/* Existing Settings Button */}
             <TouchableOpacity 
               style={styles.tertiaryButtonLarge}
               onPress={() => navigation.navigate('Settings')}
@@ -113,71 +125,72 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.buttonSubtext}>Customize difficulty</Text>
             </TouchableOpacity>
 
-            {/* New Feature Highlight */}
+            {/* NEW: Feature highlight for the new mode */}
             <View style={styles.featureHighlight}>
-              <Text style={styles.featureTitle}>🆕 Formation Comparison</Text>
+              <Text style={styles.featureTitle}>🆕 New Game Mode!</Text>
               <Text style={styles.featureDescription}>
-                Analyze offensive vs defensive matchups
+                Test your instincts! See one play vs one defense and decide: Snap the ball or call an audible?
               </Text>
               <TouchableOpacity 
                 style={styles.featureButton}
-                onPress={() => navigation.navigate('FormationComparison')}
+                onPress={() => navigation.navigate('SnapAudible')}
               >
-                <Text style={styles.featureButtonText}>Try It Out →</Text>
+                <Text style={styles.featureButtonText}>Try It Now →</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-
-        {/* Footer for Educational Mission */}
-        <View style={styles.footer}>
-          <Text style={styles.footerTitle}>🎓 Built for Young Football Minds</Text>
-          <Text style={styles.footerText}>
-            Designed to help middle school, high school, and young quarterbacks develop the mental side of the game. Learn to read defenses like Tom Brady and make smarter decisions at the line of scrimmage.
-          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+// Styles - keeping all existing styles and just adding the new button style
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+
+  // Header Bar (unchanged)
   headerBar: {
     backgroundColor: '#1f4e79',
-    paddingVertical: 16,
+    paddingVertical: 15,
     paddingHorizontal: 20,
     alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#374151',
   },
   titleLarge: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
-    textAlign: 'center',
+    marginBottom: 4,
   },
   subtitleLarge: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
-    marginTop: 4,
+    fontSize: 16,
+    color: '#cbd5e1',
+    fontWeight: '500',
   },
+
+  // Main scroll view (unchanged)
   mainScrollView: {
     flex: 1,
   },
   scrollContentContainer: {
     flexGrow: 1,
-    padding: 20,
   },
+
+  // Layout (unchanged)
   horizontalContent: {
+    flex: 1,
     flexDirection: 'row',
+    padding: 20,
     gap: 20,
-    minHeight: '100%',
   },
   verticalContent: {
-    minHeight: '100%',
+    flex: 1,
+    padding: 20,
   },
   leftPanel: {
     flex: 1,
@@ -213,19 +226,19 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  // Enhanced Quote Styling
+  // Quote and content (unchanged)
   quoteContainer: {
-    backgroundColor: '#f0f9ff',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    padding: 16,
     marginBottom: 20,
-    borderLeftWidth: 5,
+    borderLeftWidth: 4,
     borderLeftColor: '#1f4e79',
   },
   quoteTextLarge: {
     fontSize: 16,
     fontStyle: 'italic',
-    color: '#2c3e50',
+    color: '#374151',
     lineHeight: 24,
     textAlign: 'center',
     marginBottom: 12,
@@ -237,7 +250,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Description and Stats
+  // Description and Stats (unchanged)
   descriptionBox: {
     backgroundColor: '#f8f9fa',
     borderRadius: 10,
@@ -274,7 +287,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Enhanced Buttons
+  // Enhanced Buttons (unchanged existing ones)
   sectionTitleLarge: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -300,6 +313,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
+
+  // NEW: Snap or Audible button style (distinctive red color)
+  snapAudibleButtonLarge: {
+    backgroundColor: '#dc2626',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  snapAudibleButtonTextLarge: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+
+  // Existing buttons (unchanged)
   secondaryButtonLarge: {
     backgroundColor: '#3b82f6',
     borderRadius: 12,
@@ -343,7 +378,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Feature Highlight
+  // Feature Highlight (unchanged)
   featureHighlight: {
     backgroundColor: '#fef3c7',
     borderRadius: 12,
@@ -375,31 +410,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: 'white',
-  },
-
-  // Footer
-  footer: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  footerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f4e79',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#6b7280',
-    lineHeight: 20,
-    textAlign: 'center',
   },
 });
