@@ -107,6 +107,15 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.buttonSubtext}>Quick decision training</Text>
             </TouchableOpacity>
 
+            {/* Gap Recognition Button */}
+            <TouchableOpacity 
+              style={styles.gapRecognitionButtonLarge}
+              onPress={() => navigation.navigate('GapRecognition')}
+            >
+              <Text style={styles.gapRecognitionButtonTextLarge}>🏃‍♂️ Gap Recognition Training</Text>
+              <Text style={styles.buttonSubtext}>Find the best running gaps</Text>
+            </TouchableOpacity>
+
             {/* Existing Library Button */}
             <TouchableOpacity 
               style={styles.secondaryButtonLarge}
@@ -329,6 +338,26 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   snapAudibleButtonTextLarge: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+
+  // Gap Recognition button style (distinctive green color)
+  gapRecognitionButtonLarge: {
+    backgroundColor: '#059669', // Green color
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  gapRecognitionButtonTextLarge: {
     fontSize: 18,
     fontWeight: 'bold',
     color: 'white',

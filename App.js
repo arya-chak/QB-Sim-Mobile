@@ -6,7 +6,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 // Import screens
 import HomeScreen from './screens/HomeScreen';
 import GameScreen from './screens/GameScreen';
-import SnapAudibleScreen from './screens/SnapAudibleScreen'; // NEW: Import the new screen
+import SnapAudibleScreen from './screens/SnapAudibleScreen';
+import GapRecognitionScreen from './screens/GapRecognitionScreen'; // NEW: Import Gap Recognition screen
 import SettingsScreen from './screens/SettingsScreen';
 import OffensiveLibraryScreen from './screens/OffensiveLibraryScreen';
 import OffensiveFormationDetailScreen from './screens/OffensiveFormationDetailScreen';
@@ -56,68 +57,40 @@ function LibraryScreen({ navigation }) {
           </Text>
           
           <TouchableOpacity 
-            style={styles.libraryButton}
+            style={styles.primaryButtonLarge}
             onPress={() => navigation.navigate('OffensiveLibrary')}
           >
-            <View style={styles.libraryButtonContent}>
-              <Text style={styles.libraryButtonEmoji}>🏈</Text>
-              <View style={styles.libraryButtonText}>
-                <Text style={styles.libraryButtonTitle}>Browse Offensive Formations</Text>
-                <Text style={styles.libraryButtonSubtitle}>7 formations • 70 plays</Text>
-              </View>
-              <Text style={styles.libraryButtonArrow}>→</Text>
-            </View>
+            <Text style={styles.primaryButtonTextLarge}>📖 Browse Offensive Library</Text>
           </TouchableOpacity>
         </View>
         
         <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
           <Text style={styles.sectionTitleLarge}>🛡️ Defensive Formations</Text>
           <Text style={styles.descriptionText}>
-            Browse defensive formations, coverage packages, and blitz schemes.
+            Study all defensive formations with coverage packages, blitz schemes, and tactical breakdowns.
           </Text>
           
           <TouchableOpacity 
-            style={styles.libraryButton}
+            style={styles.secondaryButtonLarge}
             onPress={() => navigation.navigate('DefensiveLibrary')}
           >
-            <View style={styles.libraryButtonContent}>
-              <Text style={styles.libraryButtonEmoji}>🛡️</Text>
-              <View style={styles.libraryButtonText}>
-                <Text style={styles.libraryButtonTitle}>Browse Defensive Formations</Text>
-                <Text style={styles.libraryButtonSubtitle}>7 formations • 252 schemes</Text>
-              </View>
-              <Text style={styles.libraryButtonArrow}>→</Text>
-            </View>
+            <Text style={styles.secondaryButtonTextLarge}>🔍 Browse Defensive Library</Text>
           </TouchableOpacity>
-
+          
           <TouchableOpacity 
-            style={styles.libraryButton}
+            style={styles.tertiaryButtonLarge}
             onPress={() => navigation.navigate('FormationComparison')}
           >
-            <View style={styles.libraryButtonContent}>
-              <Text style={styles.libraryButtonEmoji}>⚖️</Text>
-              <View style={styles.libraryButtonText}>
-                <Text style={styles.libraryButtonTitle}>Formation Comparison</Text>
-                <Text style={styles.libraryButtonSubtitle}>Analyze matchups & strategies</Text>
-              </View>
-              <Text style={styles.libraryButtonArrow}>→</Text>
-            </View>
+            <Text style={styles.tertiaryButtonTextLarge}>⚖️ Compare Formations</Text>
           </TouchableOpacity>
         </View>
-      </View>
-
-      {/* Footer */}
-      <View style={styles.libraryFooter}>
-        <Text style={styles.libraryFooterText}>
-          Study formations and plays to improve your pre-snap reads and decision making
-        </Text>
       </View>
     </SafeAreaView>
   );
 }
 
-// Main App Component with Navigation
-export default function App() {
+// Main App Component
+function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator 
@@ -127,12 +100,22 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Game" component={GameScreen} />
         
-        {/* NEW: Add SnapAudible screen to navigation */}
+        {/* Snap or Audible screen */}
         <Stack.Screen 
           name="SnapAudible" 
           component={SnapAudibleScreen}
           options={{
             title: 'Snap or Audible',
+            headerShown: false
+          }}
+        />
+        
+        {/* NEW: Gap Recognition screen */}
+        <Stack.Screen 
+          name="GapRecognition" 
+          component={GapRecognitionScreen}
+          options={{
+            title: 'Gap Recognition',
             headerShown: false
           }}
         />
@@ -263,76 +246,75 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  // Library specific styles
+  // Typography
   sectionTitleLarge: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#1f4e79',
-    marginBottom: 20,
-    textAlign: 'center',
+    marginBottom: 16,
   },
   descriptionText: {
     fontSize: 16,
     color: '#6b7280',
     lineHeight: 24,
-    marginBottom: 20,
-    textAlign: 'center',
+    marginBottom: 24,
   },
-  libraryButton: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
+
+  // Buttons
+  primaryButtonLarge: {
+    backgroundColor: '#10b981',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
     borderRadius: 12,
-    padding: 16,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  libraryButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  libraryButtonEmoji: {
-    fontSize: 24,
-    marginRight: 16,
-  },
-  libraryButtonText: {
-    flex: 1,
-  },
-  libraryButtonTitle: {
+  primaryButtonTextLarge: {
+    color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1f4e79',
-    marginBottom: 4,
+    textAlign: 'center',
   },
-  libraryButtonSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  libraryButtonArrow: {
-    fontSize: 20,
-    color: '#6b7280',
-    marginLeft: 12,
-  },
-  libraryFooter: {
-    backgroundColor: 'white',
+  secondaryButtonLarge: {
+    backgroundColor: '#3b82f6',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
     borderRadius: 12,
-    padding: 20,
-    margin: 20,
-    marginTop: 0,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  libraryFooterText: {
-    fontSize: 14,
-    color: '#6b7280',
-    lineHeight: 20,
+  secondaryButtonTextLarge: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  tertiaryButtonLarge: {
+    backgroundColor: '#f59e0b',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  tertiaryButtonTextLarge: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
     textAlign: 'center',
   },
 });
+
+export default App;
