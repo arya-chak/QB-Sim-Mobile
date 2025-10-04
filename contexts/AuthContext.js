@@ -7,7 +7,7 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
 const AuthContext = createContext({});
 
@@ -90,12 +90,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (updates) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+    
+      await updateDoc(doc(db, 'users', user.uid), updates);
+    
+      // Update local user state
+      setUser(prev => ({ ...prev, ...updates }));
+    
+      return { success: true };
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     user,
     loading,
     signup,
     login,
-    logout
+    logout,
+    updateProfile
   };
 
   return (

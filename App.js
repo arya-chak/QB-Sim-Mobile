@@ -9,13 +9,14 @@ import { ActivityIndicator, View, StyleSheet, Text } from 'react-native';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 
-// Existing Player Screens
+// Team Setup
+import JoinTeamScreen from './screens/JoinTeamScreen';
+
+// Coach Screens
+import CoachDashboardScreen from './screens/CoachDashboardScreen';
+
+// Player Screens
 import HomeScreen from './screens/HomeScreen';
-// import GameScreen from './screens/GameScreen';
-// import LibraryScreen from './screens/LibraryScreen';
-// import SettingsScreen from './screens/SettingsScreen';
-// import GapRecognitionScreen from './screens/GapRecognitionScreen';
-// import SnapAudibleScreen from './screens/SnapAudibleScreen';
 
 const Stack = createStackNavigator();
 
@@ -34,21 +35,20 @@ function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {!user ? (
+        // Not logged in - show auth screens
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Signup" component={SignupScreen} />
         </>
+      ) : !user.teamId ? (
+        // Logged in but no team - show join team screen
+        <Stack.Screen name="JoinTeam" component={JoinTeamScreen} />
+      ) : user.role === 'coach' ? (
+        // Coach with team - show coach dashboard
+        <Stack.Screen name="CoachDashboard" component={CoachDashboardScreen} />
       ) : (
-        <>
-          <Stack.Screen name="Home" component={HomeScreen} />
-          {/* Uncomment these as needed:
-          <Stack.Screen name="Game" component={GameScreen} />
-          <Stack.Screen name="Library" component={LibraryScreen} />
-          <Stack.Screen name="Settings" component={SettingsScreen} />
-          <Stack.Screen name="GapRecognition" component={GapRecognitionScreen} />
-          <Stack.Screen name="SnapAudible" component={SnapAudibleScreen} />
-          */}
-        </>
+        // Player with team - show player home
+        <Stack.Screen name="Home" component={HomeScreen} />
       )}
     </Stack.Navigator>
   );
