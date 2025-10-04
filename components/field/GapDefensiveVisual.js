@@ -27,7 +27,7 @@ const GapDefensiveVisual = ({
   // Field dimensions for mobile (matching SVGFieldVisualizer)
   const fieldWidth = 350;
   const fieldHeight = 200;
-  const losY = fieldHeight * 0.75; // Line of scrimmage at 75% down
+  const losY = fieldHeight * 0.7; // Line of scrimmage at 70% down
 
   useEffect(() => {
     loadScenarioData();
@@ -127,25 +127,32 @@ const GapDefensiveVisual = ({
     let endX = startX;
     let endY = startY;
     
+    // All pressure arrows should generally point toward the offense (downward/toward LOS)
     switch(player.pressure_direction) {
       case 'up_field':
       case 'upfield':
       case 'penetration':
-        endY -= arrowLength;
+        // Point toward the line of scrimmage (downward)
+        endY += arrowLength;
         break;
       case 'inside':
+        // Point toward center and down
         endX += startX < fieldWidth/2 ? arrowLength : -arrowLength;
-        endY -= arrowLength/2;
+        endY += arrowLength/2;
         break;
       case 'upfield_rush':
-        endY -= arrowLength;
-        endX += startX < fieldWidth/2 ? arrowLength/2 : -arrowLength/2;
+        // Point toward LOS with slight angle
+        endY += arrowLength;
+        endX += startX < fieldWidth/2 ? arrowLength/3 : -arrowLength/3;
         break;
       case 'contain':
+        // Point toward sideline but also down
         endX += startX < fieldWidth/2 ? -arrowLength : arrowLength;
+        endY += arrowLength/2;
         break;
       default:
-        endY -= arrowLength;
+        // Default: point toward offense (down)
+        endY += arrowLength;
     }
     
     return (
@@ -164,7 +171,7 @@ const GapDefensiveVisual = ({
   // Render individual defensive player (following SVGFieldVisualizer pattern)
   const DefensivePlayer = ({ player, isLinebackracker = false }) => {
     const x = (player.x / 400) * fieldWidth; // Scale from 400px design to actual width
-    const y = isLinebackracker ? losY + 20 : losY - 5; // LBs behind LOS, DL on LOS
+    const y = isLinebackracker ? losY - 50 : losY - 25; // Move both further above LOS
     
     const colors = getPlayerColor(player.position);
     const isHovered = hoveredPlayer?.position === player.position;
@@ -201,6 +208,7 @@ const GapDefensiveVisual = ({
         {getPressureArrow(player, x, y)}
         
         {/* Gap responsibility indicator */}
+        {/* Removed - too cluttered
         {player.gap_responsibility && (
           <SvgText 
             x={x} 
@@ -213,6 +221,7 @@ const GapDefensiveVisual = ({
             {player.gap_responsibility.replace('_', ' ')}
           </SvgText>
         )}
+        */}
 
         {/* Hover ring */}
         {isHovered && (
@@ -264,10 +273,10 @@ const GapDefensiveVisual = ({
 
           {/* Hash marks (matching existing pattern) */}
           <G opacity="0.6">
-            <Circle cx={fieldWidth * 0.3} cy={losY - 40} r="2" fill="#4ade80" />
-            <Circle cx={fieldWidth * 0.7} cy={losY - 40} r="2" fill="#4ade80" />
-            <Circle cx={fieldWidth * 0.3} cy={losY + 40} r="2" fill="#4ade80" />
-            <Circle cx={fieldWidth * 0.7} cy={losY + 40} r="2" fill="#4ade80" />
+            <Circle cx={fieldWidth * 0.3} cy={losY - 80} r="2" fill="#4ade80" />
+            <Circle cx={fieldWidth * 0.7} cy={losY - 80} r="2" fill="#4ade80" />
+            <Circle cx={fieldWidth * 0.3} cy={losY + 30} r="2" fill="#4ade80" />
+            <Circle cx={fieldWidth * 0.7} cy={losY + 30} r="2" fill="#4ade80" />
           </G>
 
           {/* Line of Scrimmage */}
@@ -284,29 +293,29 @@ const GapDefensiveVisual = ({
           {/* Gap labels */}
           {showGapLabels && (
             <G>
-              <SvgText x={60} y={losY + 15} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">D</SvgText>
-              <SvgText x={110} y={losY + 15} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">C</SvgText>
-              <SvgText x={160} y={losY + 15} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">B</SvgText>
-              <SvgText x={175} y={losY + 15} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">A</SvgText>
-              <SvgText x={225} y={losY + 15} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">A</SvgText>
-              <SvgText x={240} y={losY + 15} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">B</SvgText>
-              <SvgText x={290} y={losY + 15} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">C</SvgText>
-              <SvgText x={340} y={losY + 15} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">D</SvgText>
+              <SvgText x={60} y={losY + 20} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">D</SvgText>
+              <SvgText x={110} y={losY + 20} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">C</SvgText>
+              <SvgText x={160} y={losY + 20} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">B</SvgText>
+              <SvgText x={175} y={losY + 20} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">A</SvgText>
+              <SvgText x={225} y={losY + 20} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">A</SvgText>
+              <SvgText x={240} y={losY + 20} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">B</SvgText>
+              <SvgText x={290} y={losY + 20} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">C</SvgText>
+              <SvgText x={340} y={losY + 20} fontSize="12" fill="#059669" fontWeight="bold" textAnchor="middle">D</SvgText>
             </G>
           )}
 
           {/* Weak/Strong Side Labels */}
-          <SvgText x={80} y={30} fontSize="14" fill="#fbbf24" fontWeight="bold" textAnchor="middle">WEAK</SvgText>
-          <SvgText x={270} y={30} fontSize="14" fill="#fbbf24" fontWeight="bold" textAnchor="middle">STRONG</SvgText>
+          <SvgText x={80} y={25} fontSize="14" fill="#fbbf24" fontWeight="bold" textAnchor="middle">WEAK</SvgText>
+          <SvgText x={270} y={25} fontSize="14" fill="#fbbf24" fontWeight="bold" textAnchor="middle">STRONG</SvgText>
 
           {/* Render D-Line */}
-          {defense.front_7.d_line.map((player) => (
-            <DefensivePlayer key={player.position} player={player} isLinebackracker={false} />
+          {defense.front_7.d_line.map((player, index) => (
+            <DefensivePlayer key={`dline-${player.position}-${index}`} player={player} isLinebackracker={false} />
           ))}
 
           {/* Render Linebackers */}
-          {defense.front_7.linebackers.map((player) => (
-            <DefensivePlayer key={player.position} player={player} isLinebackracker={true} />
+          {defense.front_7.linebackers.map((player, index) => (
+            <DefensivePlayer key={`lb-${player.position}-${index}`} player={player} isLinebackracker={true} />
           ))}
 
           {/* Line of Scrimmage label */}

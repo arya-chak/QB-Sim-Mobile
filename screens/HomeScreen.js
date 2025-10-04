@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView, Dimensions } from 'react-native';
 import ApiService from '../services/ApiService';
+import { useAuth } from '../contexts/AuthContext';
 
 // Hook to track orientation changes
 function useOrientation() {
@@ -23,6 +24,11 @@ export default function HomeScreen({ navigation }) {
   const orientation = useOrientation();
   const isLandscape = orientation === 'landscape';
   const [stats, setStats] = useState(null);
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   useEffect(() => {
     loadStats();
@@ -41,10 +47,18 @@ export default function HomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       {/* Header Bar */}
       <View style={styles.headerBar}>
-        <Text style={styles.titleLarge}>🏈 QB Pre-Snap Simulator</Text>
+        <Text style={styles.titleLarge}>PreSnap Prep</Text>
         <Text style={styles.subtitleLarge}>
           Master Pre-Snap Reads Like a Pro
         </Text>
+        <TouchableOpacity 
+          style={{ backgroundColor: '#ef4444', padding: 12, borderRadius: 8, margin: 16 }}
+          onPress={handleLogout}
+        >
+          <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>
+            Logout ({user?.profile?.firstName})
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Responsive Content Layout with ScrollView */}
@@ -87,14 +101,14 @@ export default function HomeScreen({ navigation }) {
 
           {/* Right Panel - Action Buttons */}
           <View style={isLandscape ? styles.rightPanel : styles.fullPanel}>
-            <Text style={styles.sectionTitleLarge}>🎮 Start Training</Text>
+            <Text style={styles.sectionTitleLarge}>🏈 Training</Text>
             
             {/* Main Play Game Button */}
             <TouchableOpacity 
               style={styles.primaryButtonLarge}
               onPress={() => navigation.navigate('Game')}
             >
-              <Text style={styles.primaryButtonTextLarge}>🛡️ Play Game</Text>
+              <Text style={styles.primaryButtonTextLarge}>🛡️ Start Learning</Text>
               <Text style={styles.buttonSubtext}>Read defenses & call plays</Text>
             </TouchableOpacity>
 
